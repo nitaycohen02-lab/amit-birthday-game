@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>AMIT'S BIRTHDAY GAME</title>
+  <meta name="description" content="Amit's Birthday Game — Season 4">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <style>
+    :root{--bg:#0a0a0a;--card:#151515;--cream:#f1e8d5;--gold:#c9a96a;--muted:#9a9388;--ok:#8cbf8c;--warn:#d8a44b;--danger:#d46a6a}
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#070707,#111);color:var(--cream);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;min-height:100vh}
+    .app{max-width:520px;margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 18px calc(24px + env(safe-area-inset-bottom))}
+    .top{position:sticky;top:0;background:rgba(10,10,10,.92);backdrop-filter:blur(10px);padding:14px 0 10px;z-index:20;border-bottom:1px solid #222}
+    .brand{font-weight:800;letter-spacing:.08em;font-size:14px;color:var(--gold)}
+    .stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--muted)}
+    .pill{border:1px solid #2d2d2d;border-radius:999px;padding:6px 9px;background:#101010}
+    .meter{height:7px;background:#262626;border-radius:999px;overflow:hidden;margin-top:10px}.meter>div{height:100%;background:var(--gold);width:0%;transition:.4s}
+    .screen{padding:20px 0 80px}.hero{padding:28px 18px;border:1px solid #2a2a2a;background:radial-gradient(circle at top,#1d1a14,#111 55%);border-radius:24px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+    h1{font-size:34px;line-height:.95;margin:8px 0 10px;letter-spacing:.02em} h2{font-size:26px;margin:0 0 12px} h3{font-size:18px;margin:0 0 10px}.sub{color:var(--muted);font-size:14px;line-height:1.6}.gold{color:var(--gold)}
+    button{width:100%;border:none;border-radius:16px;padding:15px 16px;font-weight:800;font-size:16px;margin-top:12px;background:var(--gold);color:#111;cursor:pointer}
+    button.secondary{background:#1c1c1c;color:var(--cream);border:1px solid #333} button.ghost{background:transparent;color:var(--gold);border:1px solid #3b3427} button.danger{background:#3a1717;color:#ffdada}
+    .card{border:1px solid #2b2b2b;border-radius:20px;background:var(--card);padding:18px;margin:14px 0}.q{font-size:20px;font-weight:800;line-height:1.35}.answers{display:grid;gap:10px;margin-top:14px}.answer{background:#1c1c1c;color:var(--cream);border:1px solid #333;text-align:right}.answer:hover{border-color:#5b4c32}.feedback{margin-top:12px;padding:12px;border-radius:14px;background:#101010;border:1px dashed #3a3a3a;line-height:1.6}
+    .locked{opacity:.55}.route{display:grid;gap:8px}.route-item{display:flex;justify-content:space-between;align-items:center;border:1px solid #292929;border-radius:14px;padding:11px 12px;background:#111}.small{font-size:12px;color:var(--muted)}
+    .code{display:flex;gap:8px;direction:ltr}.code input{flex:1;background:#0d0d0d;border:1px solid #333;color:var(--cream);border-radius:14px;padding:14px;font-size:20px;letter-spacing:.2em;text-align:center}
+    .hidden{display:none!important}.archive{border-left:3px solid var(--gold)} .center{text-align:center}.big{font-size:48px}.final{background:#090909;border-color:#383128}.gm{position:fixed;left:16px;bottom:18px;width:44px;height:44px;border-radius:50%;padding:0;margin:0;background:#171717;color:#777;border:1px solid #2d2d2d;font-size:18px;z-index:30}.gm-panel{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:50;overflow:auto;padding:30px 18px}.gm-panel .inner{max-width:520px;margin:auto}.row{display:flex;gap:10px}.row>*{flex:1}.gm-panel input,.gm-panel select{width:100%;background:#111;border:1px solid #333;color:#eee;padding:12px;border-radius:12px;margin:6px 0 12px}
+    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#222;border:1px solid #444;color:#fff;padding:12px 16px;border-radius:14px;z-index:100;max-width:90%;text-align:center}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="top hidden" id="topbar">
+    <div class="brand">AMIT'S BIRTHDAY GAME • SEASON 4</div>
+    <div class="stats"><span class="pill">🏆 <b id="score">0</b></span><span class="pill">❤️❤️❤️</span><span class="pill">🚨 <b id="disaster">0%</b></span><span class="pill">LVL <b id="lvl">0</b></span></div>
+    <div class="meter"><div id="progressBar"></div></div>
+  </div>
+  <main id="screen" class="screen"></main>
+</div>
+<button class="gm hidden" id="gmBtn" title="Game Master">⚙️</button>
+<div id="gmPanel" class="gm-panel hidden"><div class="inner">
+  <h2>GAME MASTER</h2><p class="sub">מצב סודי לנתאי. קוד כניסה: 2418</p>
+  <div class="card"><label>Disaster Meter</label><input type="range" min="0" max="100" id="gmDisaster"/><button onclick="applyDisaster()">עדכן מדד</button></div>
+  <div class="card"><label>נקודות</label><input type="number" id="gmScore"/><button onclick="applyScore()">עדכן ניקוד</button></div>
+  <div class="card"><label>שעת ספא</label><input id="gmSpaTime" placeholder="למשל 16:00"/><label>משך ספא</label><input id="gmSpaDuration" placeholder="למשל 60 דקות"/><label>קוד כספת</label><input id="gmSafe" placeholder="4 ספרות" maxlength="4"/><button onclick="saveSettings()">שמור הגדרות</button></div>
+  <div class="card"><label>פתח שלב</label><select id="gmLevel"></select><button onclick="unlockLevel()">פתח שלב</button></div>
+  <button class="secondary" onclick="closeGM()">סגור</button>
+  <button class="danger" onclick="resetGame()">איפוס מלא</button>
+</div></div>
+<div id="toast" class="toast hidden"></div>
+<script>
+const L=[
+ {id:0,name:'PACKING MISSION',code:'240'},
+ {id:1,name:'GOOD MORNING',code:'418'},
+ {id:2,name:'THE RABBINATE',code:'930'},
+ {id:3,name:'CAFE MARIE',code:'411'},
+ {id:4,name:'ESCAPE FROM RISHON',code:'140'},
+ {id:5,name:'GUESS THE HOTEL',code:'555'},
+ {id:6,name:'SPA.exe',code:'606'},
+ {id:7,name:'GET READY',code:'745'},
+ {id:8,name:'QUMRAN',code:'9308'},
+ {id:9,name:'FINAL BOSS',code:'999'}
+];
+let S=JSON.parse(localStorage.getItem('amitGame')||'null')||{started:false,score:0,disaster:0,level:0,unlocked:[0],answered:{},settings:{spaTime:'TBD',spaDuration:'TBD',safe:'2584'}};
+function save(){localStorage.setItem('amitGame',JSON.stringify(S));updateTop()}
+function updateTop(){document.getElementById('score').textContent=S.score;document.getElementById('disaster').textContent=S.disaster+'%';document.getElementById('lvl').textContent=S.level;document.getElementById('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
+function toast(t){let x=document.getElementById('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1800)}
+function start(){S.started=true;save();renderHome()}
+function addScore(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
+function choose(key,correct,msg){if(S.answered[key])return;S.answered[key]=true;if(correct)addScore(10);save();document.getElementById('fb-'+key).innerHTML=msg;document.getElementById('fb-'+key).classList.remove('hidden')}
+function nav(level){S.level=level;save();renderLevel(level)}
+function unlock(id){if(!S.unlocked.includes(id))S.unlocked.push(id);save();nav(id)}
+function renderStart(){document.getElementById('topbar').classList.add('hidden');document.getElementById('gmBtn').classList.add('hidden');screen.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
+function renderHome(){document.getElementById('topbar').classList.remove('hidden');document.getElementById('gmBtn').classList.remove('hidden');updateTop();let route=L.map(x=>`<div class="route-item ${S.unlocked.includes(x.id)?'':'locked'}"><span>${S.unlocked.includes(x.id)?(x.id===S.level?'▶':'✓'):'🔒'} ${S.unlocked.includes(x.id)?x.name:'CLASSIFIED'}</span><span class="small">LEVEL ${x.id}</span></div>`).join('');screen.innerHTML=`<div class="card"><div class="small">CURRENT MISSION</div><h2>${L[S.level].name}</h2><button onclick="renderLevel(${S.level})">CONTINUE</button></div><div class="card"><h3>🚨 BIRTHDAY DISASTER METER™</h3><p>${S.disaster<20?'🟢 EVERYTHING SUSPICIOUSLY FINE':S.disaster<50?'🟠 WE MAY HAVE AN INCIDENT':'🔴 THIS IS NOW A STORY'}</p></div><div class="route">${route}</div><button class="ghost" onclick="renderArchives()">🗃️ CLASSIFIED FILES</button>`}
+function gate(next){return `<div class="card"><h3>NEXT LEVEL 🔒</h3><p class="sub">המשימה הבאה נפתחת רק עם Mission Code.</p><div class="code"><input id="codeIn" inputmode="numeric" placeholder="•••"><button style="max-width:120px;margin:0" onclick="checkCode(${next})">UNLOCK</button></div></div>`}
+function checkCode(next){let v=document.getElementById('codeIn').value.trim();if(v===L[next].code){unlock(next)}else toast('❌ WRONG CODE')}
+function q(key,text,answers){return `<div class="card"><div class="q">${text}</div><div class="answers">${answers.map(a=>`<button class="answer" onclick="choose('${key}',${a.c},\`${a.m}\`)">${a.t}</button>`).join('')}</div><div id="fb-${key}" class="feedback hidden"></div></div>`}
+function renderLevel(i){S.level=i;save();document.getElementById('topbar').classList.remove('hidden');document.getElementById('gmBtn').classList.remove('hidden');let h='';
+if(i===0)h=`<div class="hero"><div class="gold">LEVEL 0</div><h2>🎒 PACKING MISSION</h2><p>מחר מתחיל המשחק. את לא יודעת לאן. את לא יודעת מה עושים. ואת בהחלט לא מקבלת לו״ז.</p></div>${q('p1','מחר מישהו זר כנראה ייגע בך במשך כמעט שעה. מה כדאי לקחת?',[{t:'צו הרחקה',c:false,m:'❌ ניסיון יפה.'},{t:'בגד ים',c:true,m:'✅ חשוד מאוד. ITEM UNLOCKED: בגד ים.'},{t:'אפוד קרמי',c:false,m:'❌ זה לא מילואים.'},{t:'נתאי',c:false,m:'❌ הוא כבר מגיע בחבילה.'}])}${q('p2','בערב תידרשי להיראות כאילו נתאי השקיע ביום הזה הרבה יותר ממה שהוא באמת השקיע.',[{t:'פיג׳מה',c:false,m:'❌ לא הפעם.'},{t:'בגדי ספורט',c:false,m:'❌ אוגוסט, אבל תרגיעי.'},{t:'אאוטפיט יפה לערב',c:true,m:'✅ ITEM UNLOCKED: בגדי ערב.'},{t:'מדי ב׳',c:false,m:'❌ trauma detected.'}])}<div class="card"><h3>PACKING LIST UNLOCKED 🔓</h3><p>בגד ים • אאוטפיט לערב • בגדים ליום למחרת • פיג׳מה • תחתונים/גרביים • כלי רחצה/איפור • מטען • משקפי שמש</p><div class="feedback">⚠️ בבקשה לוודא שהשמלות באמת בתוך התיק.<br><b>Hotel Cramim, 2025. Never Forget.</b></div></div>${gate(1)}`;
+if(i===1)h=`<div class="hero"><div class="gold">LEVEL 1</div><h2>☀️ GOOD MORNING, BIRTHDAY GIRL</h2><p>24. ארבע שנים יחד. והיום מתחיל מבחן נוסף.</p></div>${q('g1','כמה שנים נתאי ועמית ביחד?',[{t:'2',c:false,m:'❌ מעליב.'},{t:'3',c:false,m:'❌ כמעט.'},{t:'4',c:true,m:'✅ 4 YEARS. ועדיין לא הצלחת להיפטר ממנו.'},{t:'מרגיש כמו 17',c:false,m:'✅ רגשית נכון. עובדתית לא.'}])}<div class="card"><h3>💍 SIDE QUEST AVAILABLE</h3><p>לפני שמתחילים את יום ההולדת באמת... יש עניין קטן שצריך לסדר.</p><p class="big center">📄 + 💍 + 🇮🇱 = 😭</p></div>${gate(2)}`;
+if(i===2)h=`<div class="hero"><div class="gold">LEVEL 2</div><h2>💍 THE RABBINATE</h2></div>${q('r1','מה הדבר הכי רומנטי שאפשר לעשות בבוקר יום הולדת?',[{t:'ארוחת בוקר מול הים',c:false,m:'❌ WRONG. התשובה היא בירוקרטיה ישראלית.'},{t:'מסאז׳ זוגי',c:false,m:'❌ עוד לא.'},{t:'לפתוח תיק נישואים',c:true,m:'✅ לצערנו נכון.'},{t:'להישאר במיטה',c:false,m:'❌ חלום יפה.'}])}<div class="card"><h3>SIDE QUEST COMPLETE ✅</h3><p>📄 תיק: נפתח<br>👰 כלה: secured<br>🤵 חתן: unfortunately also secured</p><p><b>BIRTHDAY DISASTER METER™: 🟢 ${S.disaster}%</b></p></div>${gate(3)}`;
+if(i===3)h=`<div class="hero"><div class="gold">LEVEL 3</div><h2>☕ BACK WHERE IT ALL BEGAN</h2></div>${q('c1','העיר שבה היה הדייט הראשון שאנחנו מסרבים להכיר בו כדייט, ובה התרחש Birthday Incident 2023.',[{t:'תל אביב',c:false,m:'❌ לא.'},{t:'ראשון לציון',c:true,m:'✅ RISHON LEZION UNLOCKED.'},{t:'אשקלון',c:false,m:'❌ נסי שוב.'},{t:'פאפוס',c:false,m:'❌ את פאפוס שומרים להמשך.'}])}${q('c2','איפה היה ה״דייט שלא היה דייט״?',[{t:'מסעדה',c:false,m:'❌ יותר מדי רשמי.'},{t:'סינמה סיטי',c:false,m:'❌'},{t:'חוף 4×4',c:true,m:'✅ נתאי בשחור־לבן. שניכם: ״זה לא דייט״. Sure.'},{t:'פטריקס',c:false,m:'❌ זה כבר תיק אחר.'}])}<div class="card"><h2>☕ CAFE MARIE</h2><p>FIRST REAL REWARD UNLOCKED 🔓</p><p>OBJECTIVE: לאכול.<br>BONUS OBJECTIVE: לא לשאול מה עושים אחרי.</p></div>${gate(4)}`;
+if(i===4)h=`<div class="hero"><div class="gold">LEVEL 4</div><h2>🌇 ESCAPE FROM RISHON</h2></div>${q('e1','עיר שבה יש ים, אין חניה, כל דבר עולה פי 2 ואיכשהו אנחנו עדיין נוסעים אליה מרצון.',[{t:'תל אביב',c:true,m:'✅ TEL AVIV UNLOCKED 🌇'},{t:'חיפה',c:false,m:'❌'},{t:'אשדוד',c:false,m:'❌'},{t:'הרצליה',c:false,m:'❌ close energy, wrong city.'}])}<div class="card"><h3>🏨 HOTEL: CLASSIFIED 🔒</h3><p>יש לך עוד עבודה.</p></div>${gate(5)}`;
+if(i===5)h=`<div class="hero"><div class="gold">LEVEL 5</div><h2>🏨 GUESS THE HOTEL</h2><p>3 ניסיונות. כל ניחוש שגוי = מינוס 5.</p></div>${q('h1','🌊 מול הים • 👑 השם נשמע מלכותי • 🏖️ ואת לא חוזרת הביתה הלילה',[{t:'Royal Beach',c:true,m:'✅ HOTEL UNLOCKED: ROYAL BEACH 🏨'},{t:'The Jaffa',c:false,m:'❌ -5 POINTS'},{t:'Hilton',c:false,m:'❌ -5 POINTS'},{t:'David InterContinental',c:false,m:'❌ -5 POINTS'}])}<div class="card"><h3>CHECK-IN COMPLETE</h3><p>Cute. חשבת שהגענו לפרס?</p><div class="meter"><div style="width:40%"></div></div><p class="center">DAY PROGRESS 40%</p></div>${gate(6)}`;
+if(i===6)h=`<div class="hero"><div class="gold">LEVEL 6</div><h2>🧖‍♀️ SPA.exe</h2></div>${q('s1','אחד מהבאים הוזמן עבורך:',[{t:'🏋️‍♀️ אימון',c:false,m:'❌ ביום הולדת? נתאי לא אמיץ עד כדי כך.'},{t:'💆‍♀️ מסאז׳',c:true,m:'✅ חשוד מאוד. או שאת מכירה אותו טוב מדי, או שהבגד ים הסגיר.'},{t:'🧹 ניקיון חדר',c:false,m:'❌ באמת?'},{t:'🏃‍♀️ ריצה בטיילת',c:false,m:'❌ לא.'}])}<div class="card"><h2>SPA TIME 🔓</h2><p>📍 Royal Beach<br>🕐 ${S.settings.spaTime}<br>⏱️ ${S.settings.spaDuration}</p></div>${gate(7)}`;
+if(i===7)h=`<div class="hero"><div class="gold">LEVEL 7</div><h2>👗 GET READY</h2><p>יש לך עד 20:45 להיות מוכנה. Destination: CLASSIFIED.</p></div>${q('qf1','על מה הייתה השיחה הראשונה שלנו?',[{t:'צבא',c:false,m:'❌'},{t:'זוגיות',c:false,m:'❌'},{t:'ניילון ניילוץ',c:true,m:'✅ וכנגד כל הסיכויים, מזה יצאה חתונה.'},{t:'משהו נורמלי',c:false,m:'❌ מעולם לא.'}])}${q('qf2','איפה הייתה הנשיקה הראשונה שלנו?',[{t:'ראשון',c:false,m:'❌ הרבנות הייתה הבוקר. יש עוד זמן לבטל.'},{t:'תל אביב',c:false,m:'❌'},{t:'סיני',c:true,m:'✅ SINAI 🇪🇬'},{t:'אילת',c:false,m:'❌'}])}${q('qf3','מה עמית פעם שנאה שקוראים לה?',[{t:'חינוכית',c:true,m:'✅ החינוכית מרוצה. סליחה.'},{t:'נסיכה',c:false,m:'❌'},{t:'גברת',c:false,m:'❌'},{t:'בוסית',c:false,m:'❌'}])}${q('qf4','מה מידת הנעליים של נתאי?',[{t:'42',c:false,m:'❌ ארבע שנים יחד בשביל זה?'},{t:'43',c:false,m:'❌'},{t:'44',c:true,m:'✅ סוף סוף מישהי יכולה לקנות לו נעליים.'},{t:'45',c:false,m:'❌'}])}${q('qf5','מה היה חלום הילדות של נתאי?',[{t:'שף',c:false,m:'❌'},{t:'מפיק מוזיקלי',c:true,m:'✅ PRODUCER NITAY UNLOCKED 🎧'},{t:'כדורגלן',c:false,m:'❌'},{t:'טייס',c:false,m:'❌'}])}<div class="card"><h3>🦩 FLAMINGO CHALLENGE</h3><p>עמדי 10 שניות על רגל אחת.</p><button onclick="flamingo(this)">START 10 SEC TIMER</button></div>${gate(8)}`;
+if(i===8)h=`<div class="hero"><div class="gold">LEVEL 8</div><h2>🍽️ WHERE THE F*CK ARE WE GOING?</h2><p>20:45 • 3 ניסיונות • רמז נוסף = מינוס נקודות.</p></div><div class="card"><h3>HINT #1</h3><p>המקום הבא לא נבחר בשביל השקט.</p><h3>HINT #2</h3><p>זה ערב. זה תל אביב. כדאי שבאת רעבה.</p><h3>HINT #3</h3><p>השם שלו נשמע כאילו חזרנו לתקופת בית שני.</p></div>${q('qum','אז לאן?', [{t:'QUMRAN',c:true,m:'✅ HOLY SH*T. SHE GOT IT. 21:30 🍽️'},{t:'OPA',c:false,m:'❌'},{t:'Taizu',c:false,m:'❌'},{t:'Mashya',c:false,m:'❌'}])}<div class="card center"><h3>GAME PAUSED</h3><p>בלי שאלות. בלי משימות. בלי נקודות.<br><b>Enjoy your dinner ❤️</b></p></div>${gate(9)}`;
+if(i===9)h=`<div class="hero final"><div class="gold">FINAL BOSS</div><h2>🏆 ONE. LAST. MISSION.</h2><p>92% IS NOT 100%.</p></div>${q('f1','מה המאכל האהוב על נתאי?',[{t:'סטייק',c:true,m:'✅ LOCK 1 OPEN'},{t:'סושי',c:false,m:'❌'},{t:'פסטה',c:false,m:'❌'},{t:'פיצה',c:false,m:'❌'}])}${q('f2','באיזה טסט נתאי עבר?',[{t:'ראשון',c:false,m:'❌'},{t:'שני',c:false,m:'❌'},{t:'שלישי',c:true,m:'✅ LOCK 2 OPEN'},{t:'רביעי',c:false,m:'❌'}])}${q('f3','כמה פעמים נתאי היה במיון?', [{t:'פעם אחת',c:false,m:'❌'},{t:'פעמיים',c:true,m:'✅ LOCK 3 OPEN'},{t:'3',c:false,m:'❌'},{t:'4',c:false,m:'❌'}])}${q('f4','איך כמעט קראו לעמית?', [{t:'עומר',c:true,m:'✅ LOCK 4 OPEN'},{t:'נועה',c:false,m:'❌'},{t:'מאיה',c:false,m:'❌'},{t:'חינוכית',c:false,m:'GAME OVER. ביקשת את זה בעצמך.'}])}<div class="card final center"><h2>🔐 FINAL CODE</h2><div class="big gold">${S.settings.safe}</div><p>המתנה שלך מחכה בכספת בחדר.</p><button onclick="showEnding()">פתחתי את הכספת ❤️</button></div>`;
+screen.innerHTML=h}
+function flamingo(btn){btn.disabled=true;let n=10;btn.textContent=n;let t=setInterval(()=>{n--;btn.textContent=n;if(n<=0){clearInterval(t);btn.textContent='🦩 VERIFIED +10';addScore(10)}},1000)}
+function renderArchives(){screen.innerHTML=`<div class="hero"><h2>🗃️ CLASSIFIED FILES</h2><p>ארכיון תקריות יום ההולדת</p></div><div class="card archive"><h3>2023 — THE GREAT AFTER INCIDENT</h3><p>עמית ארגנה לעצמה חגיגה בפטריקס. נתאי יצא במיוחד לאפטר, היה אופטימי לגבי המשך הערב, ובסוף — חוּזְלַ״ש. בבוקר: אוטובוסים לקריית שמונה.</p></div><div class="card archive"><h3>2024 — THE 1:43 INCIDENT</h3><p>הברכה איחרה בשעה ו־43 דקות. החשוד היה בכותל עם חברים. בהמשך: יקב + רכיבה על סוסים = redemption.</p></div><div class="card archive"><h3>2025 — THE MISSING DRESSES</h3><p>כרמים: מלון ✅ זוג ✅ שמלות ❌. חזרנו להביא אותן. Never Forget.</p></div><div class="card archive"><h3>2026 — ACTIVE INVESTIGATION</h3><p>Disaster Meter: ${S.disaster}%</p></div><button onclick="renderHome()">חזרה למשחק</button>`}
+function showEnding(){screen.innerHTML=`<div class="hero final"><div class="gold">GAME COMPLETE ❤️</div><h1>100%</h1><p>ארבע שנים של חוויות, טיולים, צחוקים, פאדיחות וימי הולדת מוצלחים יותר ומוצלחים פחות.</p><p>והשנה הזאת קצת אחרת — כי זה יום ההולדת האחרון שלך לפני שאנחנו מתחתנים.</p><p>מחוף 4×4, דרך סיני ועד פאפוס, הדבר שאני הכי מחכה לו עדיין לפנינו.</p><h2>יום הולדת שמח, מאמי ❤️</h2><div class="card"><div class="small">NEXT LEVEL</div><h1 class="gold">08.10.2026 💍</h1><p>COHEN × COHEN</p></div><p class="small">FINAL SCORE: ${S.score}</p></div>`}
+document.getElementById('gmBtn').onclick=()=>{let p=prompt('Game Master code');if(p==='2418')openGM();else toast('ACCESS DENIED')}
+function openGM(){document.getElementById('gmPanel').classList.remove('hidden');gmDisaster.value=S.disaster;gmScore.value=S.score;gmSpaTime.value=S.settings.spaTime;gmSpaDuration.value=S.settings.spaDuration;gmSafe.value=S.settings.safe;gmLevel.innerHTML=L.map(x=>`<option value="${x.id}">${x.id} — ${x.name}</option>`).join('')}
+function closeGM(){document.getElementById('gmPanel').classList.add('hidden')}
+function applyDisaster(){S.disaster=+gmDisaster.value;save();toast('Disaster Meter updated')}
+function applyScore(){S.score=+gmScore.value;save();toast('Score updated')}
+function saveSettings(){S.settings.spaTime=gmSpaTime.value||'TBD';S.settings.spaDuration=gmSpaDuration.value||'TBD';S.settings.safe=gmSafe.value||'2584';save();toast('Settings saved')}
+function unlockLevel(){let id=+gmLevel.value;if(!S.unlocked.includes(id))S.unlocked.push(id);S.level=id;save();closeGM();renderLevel(id)}
+function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGame');location.reload()}}
+if(S.started)renderHome();else renderStart();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+</script>
+</body></html>
