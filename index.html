@@ -35,6 +35,10 @@
     .modal{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:120;display:flex;align-items:center;justify-content:center;padding:22px}
     .modal-box{width:100%;max-width:460px;background:linear-gradient(180deg,#1b160f,#111);border:1px solid #5b4726;border-radius:24px;padding:24px;text-align:center;box-shadow:0 30px 90px #000}
     .pause{min-height:58vh;display:flex;flex-direction:column;justify-content:center;text-align:center}
+    .approval-gate{border:1px solid #4a402f;background:linear-gradient(180deg,#18140e,#111);border-radius:20px;padding:18px;margin:14px 0;text-align:center}
+    .approval-gate.ready{border-color:#6a5835}.approval-gate.waiting{box-shadow:0 0 0 1px rgba(201,169,106,.12) inset}
+    .approval-gate .status{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}
+    .gm-status{padding:12px;border:1px dashed #444;border-radius:14px;margin:12px 0;line-height:1.55}
     @media(max-width:380px){.inline{flex-direction:column}.inline button{width:100%}}
 </style>
 </head>
@@ -59,8 +63,16 @@
     <label>מספר חדר</label><input id="gmRoom" placeholder="למשל 824"/>
     <label>Observation בחדר</label><input id="gmRoomObs" placeholder="למשל 4 כריות"/>
     <label>קוד כספת</label><input id="gmSafe" maxlength="4" placeholder="2584"/>
-    <label>פתח שלב</label><select id="gmLevel"></select>
-    <button onclick="saveGM()">שמור</button>
+    <button onclick="saveGMSettings()">שמור הגדרות</button>
+  </div>
+  <div class="card">
+    <h3>אישור מעבר לשלב הבא</h3>
+    <div id="gmApprovalStatus" class="gm-status"></div>
+    <button id="gmApproveBtn" onclick="approveNextLevel()">APPROVE NEXT LEVEL</button>
+  </div>
+  <div class="card">
+    <label>פתיחה ידנית / חילוץ</label><select id="gmLevel"></select>
+    <button class="secondary" onclick="forceLevel()">FORCE OPEN LEVEL</button>
   </div>
   <button class="secondary" onclick="closeGM()">סגור</button>
   <button class="danger" onclick="resetGame()">איפוס מלא</button>
@@ -80,19 +92,19 @@
 
 <script>
 const LEVELS=['PACKING MISSION','BIRTHDAY MORNING','THE RABBINATE','CAFE MARIE','ROAD TO TEL AVIV','HOTEL MODE','BIRTHDAY ARCHIVES','GET READY','QUMRAN','FINAL BOSS'];
-const DEF={started:false,score:0,disaster:0,level:0,unlocked:[0],done:{},hints:{},settings:{spaTime:'TBD',spaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584'}};
-let S; try{S=JSON.parse(localStorage.getItem('amitGameV3'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},hints:{},settings:{spaTime:'TBD',spaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584'}};
+let S; try{S=JSON.parse(localStorage.getItem('amitGameV4'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
 const $=id=>document.getElementById(id), screenEl=$('screen');
-function save(){localStorage.setItem('amitGameV3',JSON.stringify(S));topUI()}
+function save(){localStorage.setItem('amitGameV4',JSON.stringify(S));topUI()}
 function topUI(){$('score').textContent=S.score;$('disaster').textContent=S.disaster+'%';$('lvl').textContent=S.level;$('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
 function toast(t){let x=$('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1700)}
 function add(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
 function norm(v){return (v||'').toLowerCase().trim().replace(/[׳']/g,"'").replace(/\s+/g,' ')}
 function accepted(v,arr){v=norm(v);if(arr.includes('*'))return v.length>0;return arr.some(a=>v.includes(norm(a)))}
 function mcq(key,text,answers){return `<div class="card"><div class="q">${text}</div><div class="answers">${answers.map(a=>`<button class="answer" onclick="mcqPick('${key}',${a.ok},\`${a.msg}\`)">${a.t}</button>`).join('')}</div><div id="fb-${key}" class="feedback hidden"></div></div>`}
-function mcqPick(key,ok,msg){if(S.done[key])return;S.done[key]=true;if(ok)add(10);save();$('fb-'+key).innerHTML=msg;$('fb-'+key).classList.remove('hidden')}
+function mcqPick(key,ok,msg){if(S.done[key])return;const fb=$('fb-'+key);fb.innerHTML=msg;fb.classList.remove('hidden');if(ok){S.done[key]=true;add(10);save();refreshApprovalGate()}else{toast('❌ לא נכון — נסי שוב')}}
 function textQ(key,text,answers,success,points=10,placeholder='הקלידי תשובה...'){return `<div class="card"><h3>${text}</h3><div class="inline"><input class="free-input" id="in-${key}" placeholder="${placeholder}"><button onclick='checkText("${key}",${JSON.stringify(answers)},${JSON.stringify(success)},${points})'>בדיקה</button></div><div id="fb-${key}" class="feedback hidden"></div></div>`}
-function checkText(key,answers,success,points){if(S.done[key])return;let v=$('in-'+key).value;if(accepted(v,answers)){S.done[key]=true;if(points)add(points);save();$('fb-'+key).innerHTML=success;$('fb-'+key).classList.remove('hidden');if(key==='p2')setTimeout(showPackingModal,350)}else toast('❌ נסי שוב')}
+function checkText(key,answers,success,points){if(S.done[key])return;let v=$('in-'+key).value;if(accepted(v,answers)){S.done[key]=true;if(points)add(points);save();$('fb-'+key).innerHTML=success;$('fb-'+key).classList.remove('hidden');if(key==='p2')setTimeout(showPackingModal,350);refreshApprovalGate()}else toast('❌ נסי שוב')}
 const H={
  rabbinate:['💍 יש קשר לחתונה.','📄 אנחנו צריכים לפתוח משהו, וזה לא בקבוק שמפניה.','🇮🇱 המקום שבו רומנטיקה פוגשת בירוקרטיה.'],
  marie:['☕ במקום הבא לא חותמים על שום דבר.','📍 חוזרים לעיר שבה הכול התחיל, למרות שהתעקשנו שלא.','👩🏻 השם שאת מחפשת הוא שם של אישה.','☕ MAR_ _'],
@@ -104,18 +116,46 @@ const H={
 };
 function hintBlock(id,hints){let n=S.hints[id]||0;let shown=hints.slice(0,n).map((h,i)=>`<div class="hint">HINT #${i+1}<br>${h}</div>`).join('');let btn=n<hints.length?`<button class="secondary" onclick="useHint('${id}')">${n?'עוד רמז':'תני לי רמז'} —5 🏆</button>`:'';return `<div id="h-${id}">${shown}${btn}</div>`}
 function useHint(id){S.hints[id]=(S.hints[id]||0)+1;add(-5);renderLevel(S.level)}
-function showPackingModal(){$('packingModal').classList.remove('hidden')} function closePackingModal(){$('packingModal').classList.add('hidden')}
-function timer(btn,n=24){btn.disabled=true;let x=n;btn.textContent=x;let t=setInterval(()=>{x--;btn.textContent=x;if(x<=0){clearInterval(t);btn.textContent='TIME!';add(10)}},1000)}
+function showPackingModal(){$('packingModal').classList.remove('hidden')} function closePackingModal(){S.done.packingConfirmed=true;save();$('packingModal').classList.add('hidden');refreshApprovalGate()}
+function timer(btn,n=24,key=null){if(key&&S.done[key]){btn.textContent='COMPLETED ✓';btn.disabled=true;return}btn.disabled=true;let x=n;btn.textContent=x;let t=setInterval(()=>{x--;btn.textContent=x;if(x<=0){clearInterval(t);btn.textContent='COMPLETED ✓';if(key)S.done[key]=true;add(10);save();refreshApprovalGate()}},1000)}
 function replay(id){const m={roomkey:'ב־Cafe Marie הופיע לרגע: ROOM KEY: 2',balloons:'במסך הראשון הופיעו 8 בלונים 🎈',file05:'בסיום הארכיון הופיע FILE 05',code04:'ב־GET READY הופיע CODE: 04'};alert(m[id]);add(-5)}
-function nextBtn(i,label='LEVEL COMPLETE ✓'){return `<div class="card center"><h3>${label}</h3>${i<9?`<button onclick="completeLevel(${i})">המשיכי לשלב הבא</button>`:''}</div>`}
-function completeLevel(i){if(i<9){if(!S.unlocked.includes(i+1))S.unlocked.push(i+1);S.level=i+1;save();renderLevel(i+1)}}
+const REQUIRED={
+  0:['p1','p2','p3','p4','packingConfirmed'],
+  1:['b1','b2','b3','rabbinateAns'],
+  2:['r1','r2','marieAns'],
+  3:['c1','table10','c2','c3','c4','taAns'],
+  4:['t1','road24','t2','hotelAns'],
+  5:['h1','h2','hotel24','spaAns','spaReturned'],
+  6:['a1','a2','a3','a4','a5','a6'],
+  7:['ready24','g1','g2','g3','g4','qumAns'],
+  8:['d1','d2','dinnerReturned','cp1','cp2','cp3']
+};
+function requiredFor(i){return REQUIRED[i]||[]}
+function levelReady(i){return requiredFor(i).every(k=>S.done[k])}
+function completionCount(i){let r=requiredFor(i);return [r.filter(k=>S.done[k]).length,r.length]}
+function gateHTML(i,label='MISSION STATUS'){
+  if(i>=9)return '';
+  let [done,total]=completionCount(i);
+  if(!levelReady(i))return `<div class="approval-gate" id="approvalGate"><h3>${label}</h3><div class="status">הושלמו ${done} מתוך ${total} משימות חובה.<br>השלב הבא יישאר נעול עד שכל המשימות יושלמו נכון.</div></div>`;
+  return `<div class="approval-gate ready waiting" id="approvalGate"><h3>MISSION COMPLETE ✅</h3><div class="status"><b>NEXT DESTINATION: CLASSIFIED 🔒</b><br><br>Waiting for Game Master approval...</div></div>`;
+}
+function nextBtn(i,label='MISSION STATUS'){return gateHTML(i,label)}
+function refreshApprovalGate(){let g=$('approvalGate');if(g&&Number.isInteger(S.level))g.outerHTML=gateHTML(S.level)}
+function approveNextLevel(){
+  let i=S.level;
+  if(!Number.isInteger(i)||i>=9){alert('אין שלב הבא לאישור כרגע.');return}
+  if(!levelReady(i)){alert('עדיין חסרות משימות חובה בשלב הזה.');return}
+  if(!S.unlocked.includes(i+1))S.unlocked.push(i+1);
+  S.level=i+1;S.substage='main';save();closeGM();renderLevel(i+1);
+}
 function renderStart(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><div style="font-size:28px">🎈🎈🎈🎈🎈🎈🎈🎈</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
 function start(){S.started=true;save();renderHome()}
 function renderHome(){$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');topUI();screenEl.innerHTML=`<div class="card"><div class="small">CURRENT MISSION</div><h2>${LEVELS[S.level]}</h2><button onclick="renderLevel(${S.level})">CONTINUE</button></div><div class="card"><h3>🚨 BIRTHDAY DISASTER METER™</h3><p>${S.disaster<20?'🟢 EVERYTHING SUSPICIOUSLY FINE':S.disaster<50?'🟠 WE MAY HAVE AN INCIDENT':'🔴 THIS IS NOW A STORY'}</p></div>${LEVELS.map((x,i)=>`<div class="route-item ${S.unlocked.includes(i)?'':'locked'}">${S.unlocked.includes(i)?(i===S.level?'▶':'✓'):'🔒'} ${S.unlocked.includes(i)?x:'CLASSIFIED'}</div>`).join('')}`}
-function pauseScreen(title,text,next){screenEl.innerHTML=`<div class="pause"><h1>${title}</h1><p class="sub">${text}</p><button onclick="renderLevel(${next})">I'M BACK</button></div>`}
+function pauseSpa(){screenEl.innerHTML=`<div class="pause"><h1>GAME PAUSED</h1><p class="sub">לכי ליהנות מהספא. הטלפון יכול לחכות. ❤️</p><button onclick="returnFromSpa()">I'M BACK</button></div>`}
+function returnFromSpa(){S.done.spaReturned=true;save();renderLevel(5)}
 
 function renderLevel(i){
- S.level=i;save();$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');let h=`<div class="hero"><div class="gold">LEVEL ${i}</div><h2>${LEVELS[Math.floor(i)]}</h2></div>`;
+ if(Number.isInteger(i)){S.level=i;save()}$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');let h=`<div class="hero"><div class="gold">LEVEL ${S.level}</div><h2>${LEVELS[S.level]}</h2></div>`;
  if(i===0){
  h+=`<div class="card"><p>מחר מתחיל המשחק. את לא יודעת לאן. את לא יודעת מה עושים. והטעות הראשונה שלך הייתה לתת לנתאי לתכנן הכול.</p><h3>MISSION: PACK YOUR SH*T 🎒</h3></div>`;
  h+=mcq('p1','מחר מישהו זר כנראה ייגע בך במשך כמעט שעה. מה כדאי שיהיה בתיק?',[{t:'צו הרחקה',ok:false,msg:'❌ ניסיון יפה.'},{t:'בגד ים',ok:true,msg:'✅ ITEM UNLOCKED: בגד ים.'},{t:'אפוד קרמי',ok:false,msg:'❌ זה לא מילואים.'},{t:'נתאי',ok:false,msg:'❌ הוא כבר מגיע בחבילה.'}]);
@@ -141,7 +181,7 @@ function renderLevel(i){
  if(i===3){
  h+=`<div class="card"><h3>EMERGENCY BREAKFAST ACTIVATED ☕</h3><p>EAT. DRINK. PAY ATTENTION.</p></div>`;
  h+=textQ('c1','בלי להסתכל אחורה: מה היה כתוב מתחת לשם המשחק במסך הפתיחה?',['season 4','סיזן 4'],'✅ OKAY, SHE’S ACTUALLY WATCHING.',15);
- h+=`<div class="card"><h3>TABLE INTELLIGENCE 🕵️‍♀️</h3><p>הניחי את הטלפון עם המסך כלפי מטה ל־10 שניות והסתכלי סביב.</p><button onclick="timer(this,10)">START 10 SEC</button></div>`;
+ h+=`<div class="card"><h3>TABLE INTELLIGENCE 🕵️‍♀️</h3><p>הניחי את הטלפון עם המסך כלפי מטה ל־10 שניות והסתכלי סביב.</p><button onclick="timer(this,10,'table10')">START 10 SEC</button></div>`;
  h+=textQ('c2','מה הדבר הראשון שאכלת היום?',['*'],'✅ נרשם בתיק יום ההולדת.',0,'כתבי מה אכלת...');
  h+=textQ('c3','אם נתאי היה משלם ₪1 על כל יום שחיית עד גיל 24, בערך כמה זה?',['8766','8760','8765','8767','8,766'],'✅ ועדיין זול יותר מחתונה.');
  h+=textQ('c4','איפה היה ה״דייט שלא היה דייט״?',['חוף 4x4','חוף 4×4','4x4','ארבע על ארבע'],'🏖️ Narrator: it was absolutely a date.');
@@ -149,7 +189,7 @@ function renderLevel(i){
  }
  if(i===4){
  h+=textQ('t1','אם כל שנה בחיים של עמית הייתה דקה, כמה זמן היו כל החיים שלה?',['24','24 דקות'],'✅ 24 דקות.');
- h+=`<div class="card"><h3>24 SECOND CHALLENGE ⏱️</h3><button onclick="timer(this,24)">START 24 SEC</button></div>`;
+ h+=`<div class="card"><h3>24 SECOND CHALLENGE ⏱️</h3><button onclick="timer(this,24,'road24')">START 24 SEC</button></div>`;
  h+=textQ('t2','איזה מספר הופיע ליד ROOM KEY בארוחת הבוקר?',['2','שתיים'],'✅ SHE NOTICED 😳',15)+`<div class="card"><button class="secondary" onclick="replay('roomkey')">REPLAY MEMORY —5</button></div>`;
  h+=`<div class="card"><h3>WHERE ARE WE SLEEPING TONIGHT? 👑🌊</h3>${hintBlock('hotel',H.hotel)}${textQ('hotelAns','שם המלון:',['royal beach','רויאל ביץ','רויאל ביץ׳'],'🔓 ROYAL BEACH TEL AVIV — CHECK-IN 14:00',20)}</div>`;
  h+=`<div class="card center"><h3>🏆 HOTEL HUNTER</h3><span class="memory-chip">EST. 2002</span></div>`+nextBtn(4);
@@ -157,9 +197,12 @@ function renderLevel(i){
  if(i===5){
  h+=textQ('h1','מה מספר החדר שלנו?',[S.settings.room],'✅ BASIC SURVIVAL SKILLS CONFIRMED.');
  h+=textQ('h2','Observation Challenge בחדר — מה התשובה שה־Game Master הגדיר?',[S.settings.roomObs],'✅ HOTEL DETECTIVE',15,'תשובה לפי מה שראית...');
- h+=`<div class="card"><h3>24 SECOND CHALLENGE</h3><p>יש לך 24 שניות להביא משהו בצבע בז׳.</p><button onclick="timer(this,24)">START</button></div>`;
+ h+=`<div class="card"><h3>24 SECOND CHALLENGE</h3><p>יש לך 24 שניות להביא משהו בצבע בז׳.</p><button onclick="timer(this,24,'hotel24')">START</button></div>`;
  h+=`<div class="card"><span class="memory-chip">PROTOCOL: 04</span><h3>WHAT'S NEXT? 🧖‍♀️</h3>${hintBlock('spa',H.spa)}${textQ('spaAns','מה הפעילות הבאה?',['ספא','spa','מסאז','מסאז׳','massage'],'🧖‍♀️ SPA UNLOCKED',15)}<p>🕐 ${S.settings.spaTime}<br>⏱️ ${S.settings.spaDuration}</p></div>`;
- h+=`<div class="card center"><button onclick="pauseScreen('GAME PAUSED','לכי ליהנות מהספא. הטלפון יכול לחכות. ❤️',6)">PAUSE — I'M GOING TO THE SPA</button></div>`;
+ if(S.done.h1&&S.done.h2&&S.done.hotel24&&S.done.spaAns){
+   h+=`<div class="card center"><button onclick="pauseSpa()">PAUSE — I'M GOING TO THE SPA</button></div>`;
+ }
+ h+=nextBtn(5);
  }
  if(i===6){
  h+=`<div class="card"><h3>🗃️ BIRTHDAY ARCHIVES UNLOCKED</h3><p>2023 • 2024 • 2025</p></div>`;
@@ -173,7 +216,7 @@ function renderLevel(i){
  }
  if(i===7){
  h+=`<div class="card"><h3>OPERATION: GET HOT</h3><p>DEADLINE: 20:45 • DESTINATION: CLASSIFIED</p></div>`;
- h+=`<div class="card"><h3>24 SECOND PANIC</h3><p>הביאי את הנעליים שאת מתכננת לנעול הערב.</p><button onclick="timer(this,24)">START</button></div>`;
+ h+=`<div class="card"><h3>24 SECOND PANIC</h3><p>הביאי את הנעליים שאת מתכננת לנעול הערב.</p><button onclick="timer(this,24,'ready24')">START</button></div>`;
  h+=textQ('g1','מה המזל של עמית?',['אריה','leo'],'♌ MAIN CHARACTER ENERGY CONFIRMED.');
  h+=textQ('g2','בלי להסתכל למעלה: כמה לבבות היו לך מתחילת המשחק?',['3','שלוש'],'✅ OBSERVATION');
  h+=mcq('g3','WHITE SUIT BOSS FIGHT — נתאי רוצה חליפה לבנה. מה עמית עושה?',[{t:'מכבדת את הבחירה',ok:false,msg:'❌'},{t:'מסבירה בעדינות',ok:false,msg:'עדין מדי.'},{t:'מבטלת חתונה',ok:false,msg:'קיצוני.'},{t:'אני מרגישה שאנחנו קצת כועסים',ok:true,msg:'💥 CRITICAL HIT. נתאי הפעיל: ✨ תודעת שפע ✨'}]);
@@ -182,17 +225,19 @@ function renderLevel(i){
  h+=`<div class="card"><h3>🍽️ FIND TONIGHT'S DESTINATION</h3>${hintBlock('qumran',H.qumran)}${textQ('qumAns','איפה אוכלים הערב?',['קומראן','קומרן','qumran'],'🍽️ QUMRAN — 21:30',20)}</div>`+nextBtn(7);
  }
  if(i===8){
- h+=`<div class="card"><h3>DESTINATION CONFIRMED ✅</h3><h2>QUMRAN</h2><p>ניסיון ראשון: ט״ו באב ❌<br>ניסיון שני: יום הולדת 24 ✅</p></div>`;
- h+=textQ('d1','רגע לפני שנכנסים: מה השעה עכשיו בערך?',['20','21',':'],'✅ TEMPORAL AWARENESS CONFIRMED.',10,'למשל 21:27');
- h+=textQ('d2','מה לדעתך יהיה הדבר הראשון שנתאי יזמין?',['*'],'🔮 PREDICTION SAVED.',0,'ניחוש חופשי...');
- h+=`<div class="card center"><button onclick="pauseDinner()">PAUSE GAME 🍽️</button></div>`;
+ if(S.substage!=='postDinner'){
+   h+=`<div class="card"><h3>DESTINATION CONFIRMED ✅</h3><h2>QUMRAN</h2><p>ניסיון ראשון: ט״ו באב ❌<br>ניסיון שני: יום הולדת 24 ✅</p></div>`;
+   h+=textQ('d1','רגע לפני שנכנסים: מה השעה עכשיו בערך?',['20','21',':'],'✅ TEMPORAL AWARENESS CONFIRMED.',10,'למשל 21:27');
+   h+=textQ('d2','מה לדעתך יהיה הדבר הראשון שנתאי יזמין?',['*'],'🔮 PREDICTION SAVED.',0,'ניחוש חופשי...');
+   if(S.done.d1&&S.done.d2)h+=`<div class="card center"><button onclick="pauseDinner()">PAUSE GAME 🍽️</button></div>`;
+ } else {
+   h=`<div class="hero"><div class="gold">LEVEL 8</div><h2>WELCOME BACK.</h2><p>DAY PROGRESS: 87%</p><h1>CUTE.</h1></div>`;
+   h+=textQ('cp1','מה הייתה התחנה הראשונה של היום?',['רבנות','הרבנות'],'✅ CHECKPOINT');
+   h+=textQ('cp2','איזה מספר הופיע ליד ROOM KEY?',['2'],'✅ CHECKPOINT');
+   h+=textQ('cp3','מה היה THE 1:43 INCIDENT?',['ברכה','איחור','איחור בברכה'],'✅ CHECKPOINT');
+   h+=`<div class="card center"><p>ENDING BIRTHDAY GAME...</p><p>87%</p><h2>ERROR.</h2><p>REWARD NOT FOUND.</p><h1>⚠️ WAIT.</h1></div>`;
+   h+=nextBtn(8,'FINAL CHECKPOINT');
  }
- if(i===8.5){
- h=`<div class="hero"><h2>WELCOME BACK.</h2><p>DAY PROGRESS: 87%</p><h1>CUTE.</h1></div>`;
- h+=textQ('cp1','מה הייתה התחנה הראשונה של היום?',['רבנות','הרבנות'],'✅ CHECKPOINT');
- h+=textQ('cp2','איזה מספר הופיע ליד ROOM KEY?',['2'],'✅ CHECKPOINT');
- h+=textQ('cp3','מה היה THE 1:43 INCIDENT?',['ברכה','איחור','איחור בברכה'],'✅ CHECKPOINT');
- h+=`<div class="card center"><p>ENDING BIRTHDAY GAME...</p><p>87%</p><h2>ERROR.</h2><p>REWARD NOT FOUND.</p><h1>⚠️ WAIT.</h1><button onclick="completeLevel(8)">RETURN TO THE HOTEL</button></div>`;
  }
  if(i===9){
  h+=`<div class="card"><h3>LEVEL 9A — FIND IT 🔎</h3><p>משהו מחכה לך בחדר. אני לא אגיד מה, ואני לא אגיד איפה.</p>${hintBlock('safe',H.safe)}${textQ('safePlace','איפה נמצא הדבר שאת מחפשת?',['כספת','הכספת','safe'],'🔐 LOCATION CONFIRMED: THE SAFE',15)}</div>`;
@@ -206,13 +251,23 @@ function renderLevel(i){
  }
  screenEl.innerHTML=h;
 }
-function pauseDinner(){screenEl.innerHTML=`<div class="pause"><h1>🍽️ DINNER MODE</h1><p class="sub">אין שאלות. אין רמזים. שימי את הטלפון בצד ותיהני מהערב. ❤️</p><button onclick="renderLevel(8.5)">DINNER COMPLETE ✓</button></div>`}
+function pauseDinner(){screenEl.innerHTML=`<div class="pause"><h1>🍽️ DINNER MODE</h1><p class="sub">אין שאלות. אין רמזים. שימי את הטלפון בצד ותיהני מהערב. ❤️</p><button onclick="returnFromDinner()">DINNER COMPLETE ✓</button></div>`}
+function returnFromDinner(){S.done.dinnerReturned=true;S.substage='postDinner';save();renderLevel(8)}
 function showEnding(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero final"><div class="gold">GAME COMPLETE ❤️</div><h1>100%</h1><p>עוד יום הולדת אחד שעברנו יחד.</p><p>היו לנו כבר ימי הולדת עם אפטר, ברכה שאיחרה בשעה ו־43 דקות, יקב, סוסים, כרמים ושמלות שהחליטו להישאר בבית.</p><p>אבל השנה הזאת קצת אחרת — כי זה יום ההולדת האחרון שלך לפני שאנחנו מתחתנים.</p><p>מחוף 4×4 בראשון, דרך הנשיקה הראשונה בסיני, ועד ההפתעה בפאפוס — עברנו דרך די ארוכה.</p><h2>והחלק שאני הכי מחכה לו עדיין לפנינו.</h2><h2>יום הולדת שמח, מאמי ❤️</h2><div class="card"><div class="small">NEW LEVEL DETECTED...</div><h1 class="gold">08.10.2026 💍</h1><p>COHEN × COHEN</p><b>COMING SOON.</b></div><p class="small">SEASON 4 — COMPLETE.</p></div>`}
 $('gmBtn').onclick=()=>{if(prompt('Game Master code')==='2418')openGM();else toast('ACCESS DENIED')}
-function openGM(){$('gmPanel').classList.remove('hidden');$('gmDisaster').value=S.disaster;$('gmScore').value=S.score;$('gmSpaTime').value=S.settings.spaTime;$('gmSpaDuration').value=S.settings.spaDuration;$('gmRoom').value=S.settings.room;$('gmRoomObs').value=S.settings.roomObs;$('gmSafe').value=S.settings.safe;$('gmLevel').innerHTML=LEVELS.map((x,i)=>`<option value="${i}">${i} — ${x}</option>`).join('')}
+function openGM(){
+ $('gmPanel').classList.remove('hidden');
+ $('gmDisaster').value=S.disaster;$('gmScore').value=S.score;$('gmSpaTime').value=S.settings.spaTime;$('gmSpaDuration').value=S.settings.spaDuration;$('gmRoom').value=S.settings.room;$('gmRoomObs').value=S.settings.roomObs;$('gmSafe').value=S.settings.safe;
+ $('gmLevel').innerHTML=LEVELS.map((x,i)=>`<option value="${i}">${i} — ${x}</option>`).join('');
+ $('gmLevel').value=Math.min(9,Math.floor(S.level));
+ let [done,total]=completionCount(S.level);
+ $('gmApprovalStatus').innerHTML=`Current Level: <b>${S.level}</b><br>Required missions: <b>${done}/${total}</b><br>Ready for approval: <b>${levelReady(S.level)?'YES ✅':'NO 🔒'}</b>`;
+ $('gmApproveBtn').disabled=!levelReady(S.level)||S.level>=9;
+}
 function closeGM(){$('gmPanel').classList.add('hidden')}
-function saveGM(){S.disaster=+$('gmDisaster').value;S.score=+$('gmScore').value;S.settings.spaTime=$('gmSpaTime').value||'TBD';S.settings.spaDuration=$('gmSpaDuration').value||'TBD';S.settings.room=$('gmRoom').value||'TBD';S.settings.roomObs=$('gmRoomObs').value||'TBD';S.settings.safe=$('gmSafe').value||'2584';let n=+$('gmLevel').value;if(!S.unlocked.includes(n))S.unlocked.push(n);S.level=n;save();closeGM();renderLevel(n)}
-function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV3');location.reload()}}
+function saveGMSettings(){S.disaster=+$('gmDisaster').value;S.score=+$('gmScore').value;S.settings.spaTime=$('gmSpaTime').value||'TBD';S.settings.spaDuration=$('gmSpaDuration').value||'TBD';S.settings.room=$('gmRoom').value||'TBD';S.settings.roomObs=$('gmRoomObs').value||'TBD';S.settings.safe=$('gmSafe').value||'2584';save();toast('Settings saved');openGM()}
+function forceLevel(){let n=+$('gmLevel').value;if(!S.unlocked.includes(n))S.unlocked.push(n);S.level=n;S.substage='main';save();closeGM();renderLevel(n)}
+function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV4');location.reload()}}
 if(S.started)renderHome();else renderStart();
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
 </script>
