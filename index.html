@@ -28,7 +28,15 @@
     .code{display:flex;gap:8px;direction:ltr}.code input{flex:1;background:#0d0d0d;border:1px solid #333;color:var(--cream);border-radius:14px;padding:14px;font-size:20px;letter-spacing:.2em;text-align:center}
     .hidden{display:none!important}.archive{border-left:3px solid var(--gold)} .center{text-align:center}.big{font-size:48px}.final{background:#090909;border-color:#383128}.gm{position:fixed;left:16px;bottom:18px;width:44px;height:44px;border-radius:50%;padding:0;margin:0;background:#171717;color:#777;border:1px solid #2d2d2d;font-size:18px;z-index:30}.gm-panel{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:50;overflow:auto;padding:30px 18px}.gm-panel .inner{max-width:520px;margin:auto}.row{display:flex;gap:10px}.row>*{flex:1}.gm-panel input,.gm-panel select{width:100%;background:#111;border:1px solid #333;color:#eee;padding:12px;border-radius:12px;margin:6px 0 12px}
     .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#222;border:1px solid #444;color:#fff;padding:12px 16px;border-radius:14px;z-index:100;max-width:90%;text-align:center}
-  </style>
+  
+    .hint{border-right:3px solid var(--gold);padding:10px 12px;background:#111;border-radius:12px;margin:10px 0;line-height:1.55}
+    .inline{display:flex;gap:8px;align-items:stretch}.inline input{min-width:0;flex:1}.inline button{width:auto;min-width:105px;margin:0}
+    .inline input,.free-input{background:#0f0f0f;color:#fff;border:1px solid #363636;border-radius:14px;padding:14px;font-size:17px;outline:none}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:120;display:flex;align-items:center;justify-content:center;padding:22px}
+    .modal-box{width:100%;max-width:460px;background:linear-gradient(180deg,#1b160f,#111);border:1px solid #5b4726;border-radius:24px;padding:24px;text-align:center;box-shadow:0 30px 90px #000}
+    .pause{min-height:58vh;display:flex;flex-direction:column;justify-content:center;text-align:center}
+    @media(max-width:380px){.inline{flex-direction:column}.inline button{width:100%}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -40,74 +48,173 @@
   <main id="screen" class="screen"></main>
 </div>
 <button class="gm hidden" id="gmBtn" title="Game Master">⚙️</button>
+
 <div id="gmPanel" class="gm-panel hidden"><div class="inner">
-  <h2>GAME MASTER</h2><p class="sub">מצב סודי לנתאי. קוד כניסה: 2418</p>
-  <div class="card"><label>Disaster Meter</label><input type="range" min="0" max="100" id="gmDisaster"/><button onclick="applyDisaster()">עדכן מדד</button></div>
-  <div class="card"><label>נקודות</label><input type="number" id="gmScore"/><button onclick="applyScore()">עדכן ניקוד</button></div>
-  <div class="card"><label>שעת ספא</label><input id="gmSpaTime" placeholder="למשל 16:00"/><label>משך ספא</label><input id="gmSpaDuration" placeholder="למשל 60 דקות"/><label>קוד כספת</label><input id="gmSafe" placeholder="4 ספרות" maxlength="4"/><button onclick="saveSettings()">שמור הגדרות</button></div>
-  <div class="card"><label>פתח שלב</label><select id="gmLevel"></select><button onclick="unlockLevel()">פתח שלב</button></div>
+  <h2>GAME MASTER</h2><p class="sub">מצב סודי לנתאי</p>
+  <div class="card">
+    <label>Disaster Meter</label><input type="number" min="0" max="100" id="gmDisaster"/>
+    <label>נקודות</label><input type="number" id="gmScore"/>
+    <label>שעת ספא</label><input id="gmSpaTime" placeholder="למשל 16:00"/>
+    <label>משך ספא</label><input id="gmSpaDuration" placeholder="למשל 60 דקות"/>
+    <label>מספר חדר</label><input id="gmRoom" placeholder="למשל 824"/>
+    <label>Observation בחדר</label><input id="gmRoomObs" placeholder="למשל 4 כריות"/>
+    <label>קוד כספת</label><input id="gmSafe" maxlength="4" placeholder="2584"/>
+    <label>פתח שלב</label><select id="gmLevel"></select>
+    <button onclick="saveGM()">שמור</button>
+  </div>
   <button class="secondary" onclick="closeGM()">סגור</button>
   <button class="danger" onclick="resetGame()">איפוס מלא</button>
 </div></div>
+
 <div id="toast" class="toast hidden"></div>
+
+<div id="packingModal" class="modal hidden">
+  <div class="modal-box">
+    <div class="big">⚠️</div>
+    <h2>רגע לפני שממשיכים...</h2>
+    <p><b>לוודא שהשמלות באמת בתוך התיק.</b></p>
+    <div class="feedback gold">Hotel Cramim, 2025. Never Forget.</div>
+    <button onclick="closePackingModal()">בדקתי. השמלות בתיק ✓</button>
+  </div>
+</div>
+
 <script>
-const L=[
- {id:0,name:'PACKING MISSION',code:'240'},
- {id:1,name:'GOOD MORNING',code:'418'},
- {id:2,name:'THE RABBINATE',code:'930'},
- {id:3,name:'CAFE MARIE',code:'411'},
- {id:4,name:'ESCAPE FROM RISHON',code:'140'},
- {id:5,name:'GUESS THE HOTEL',code:'555'},
- {id:6,name:'SPA.exe',code:'606'},
- {id:7,name:'GET READY',code:'745'},
- {id:8,name:'QUMRAN',code:'9308'},
- {id:9,name:'FINAL BOSS',code:'999'}
-];
-let S=JSON.parse(localStorage.getItem('amitGame')||'null')||{started:false,score:0,disaster:0,level:0,unlocked:[0],answered:{},settings:{spaTime:'TBD',spaDuration:'TBD',safe:'2584'}};
-const screenEl=document.getElementById('screen');
-const gmDisasterEl=document.getElementById('gmDisaster');
-const gmScoreEl=document.getElementById('gmScore');
-const gmSpaTimeEl=document.getElementById('gmSpaTime');
-const gmSpaDurationEl=document.getElementById('gmSpaDuration');
-const gmSafeEl=document.getElementById('gmSafe');
-const gmLevelEl=document.getElementById('gmLevel');
-function save(){localStorage.setItem('amitGame',JSON.stringify(S));updateTop()}
-function updateTop(){document.getElementById('score').textContent=S.score;document.getElementById('disaster').textContent=S.disaster+'%';document.getElementById('lvl').textContent=S.level;document.getElementById('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
-function toast(t){let x=document.getElementById('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1800)}
+const LEVELS=['PACKING MISSION','BIRTHDAY MORNING','THE RABBINATE','CAFE MARIE','ROAD TO TEL AVIV','HOTEL MODE','BIRTHDAY ARCHIVES','GET READY','QUMRAN','FINAL BOSS'];
+const DEF={started:false,score:0,disaster:0,level:0,unlocked:[0],done:{},hints:{},settings:{spaTime:'TBD',spaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584'}};
+let S; try{S=JSON.parse(localStorage.getItem('amitGameV3'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+const $=id=>document.getElementById(id), screenEl=$('screen');
+function save(){localStorage.setItem('amitGameV3',JSON.stringify(S));topUI()}
+function topUI(){$('score').textContent=S.score;$('disaster').textContent=S.disaster+'%';$('lvl').textContent=S.level;$('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
+function toast(t){let x=$('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1700)}
+function add(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
+function norm(v){return (v||'').toLowerCase().trim().replace(/[׳']/g,"'").replace(/\s+/g,' ')}
+function accepted(v,arr){v=norm(v);if(arr.includes('*'))return v.length>0;return arr.some(a=>v.includes(norm(a)))}
+function mcq(key,text,answers){return `<div class="card"><div class="q">${text}</div><div class="answers">${answers.map(a=>`<button class="answer" onclick="mcqPick('${key}',${a.ok},\`${a.msg}\`)">${a.t}</button>`).join('')}</div><div id="fb-${key}" class="feedback hidden"></div></div>`}
+function mcqPick(key,ok,msg){if(S.done[key])return;S.done[key]=true;if(ok)add(10);save();$('fb-'+key).innerHTML=msg;$('fb-'+key).classList.remove('hidden')}
+function textQ(key,text,answers,success,points=10,placeholder='הקלידי תשובה...'){return `<div class="card"><h3>${text}</h3><div class="inline"><input class="free-input" id="in-${key}" placeholder="${placeholder}"><button onclick='checkText("${key}",${JSON.stringify(answers)},${JSON.stringify(success)},${points})'>בדיקה</button></div><div id="fb-${key}" class="feedback hidden"></div></div>`}
+function checkText(key,answers,success,points){if(S.done[key])return;let v=$('in-'+key).value;if(accepted(v,answers)){S.done[key]=true;if(points)add(points);save();$('fb-'+key).innerHTML=success;$('fb-'+key).classList.remove('hidden');if(key==='p2')setTimeout(showPackingModal,350)}else toast('❌ נסי שוב')}
+const H={
+ rabbinate:['💍 יש קשר לחתונה.','📄 אנחנו צריכים לפתוח משהו, וזה לא בקבוק שמפניה.','🇮🇱 המקום שבו רומנטיקה פוגשת בירוקרטיה.'],
+ marie:['☕ במקום הבא לא חותמים על שום דבר.','📍 חוזרים לעיר שבה הכול התחיל, למרות שהתעקשנו שלא.','👩🏻 השם שאת מחפשת הוא שם של אישה.','☕ MAR_ _'],
+ ta:['🌊 אנחנו מתקרבים לים.','🚗 ים, פקקים, ו־₪50 לקפה נשמע פתאום סביר.'],
+ hotel:['👑 משהו מלכותי בשם.','🌊 החלק השני של השם נמצא ממש מולך כשעומדים על החוף.','🇬🇧 שתי מילים באנגלית: מלך + המקום שבו הים פוגש יבשה.'],
+ spa:['בשעה הקרובה העבודה הכי קשה שלך תהיה לא לעשות כלום.','💆‍♀️ מישהו אחר יעבוד. את תשכבי.','🎒 יש סיבה שביקשנו בגד ים.'],
+ qumran:['📅 המקום הבא כבר כמעט היה חלק מהסיפור שלנו פעם אחת.','❤️ היינו אמורים להיות שם בט״ו באב… אבל ביטלו לנו.','📜 השם שלו נשמע כאילו הוא שייך למגילות עתיקות.','🏺 מגילות. מערות. ים המלח.'],
+ safe:['🏨 את לא צריכה לצאת מהחדר.','🔒 המקום נועד לשמור על דברים שלא משאירים סתם בחוץ.','🔢 הוא אוהב מספרים יותר ממפתחות.']
+};
+function hintBlock(id,hints){let n=S.hints[id]||0;let shown=hints.slice(0,n).map((h,i)=>`<div class="hint">HINT #${i+1}<br>${h}</div>`).join('');let btn=n<hints.length?`<button class="secondary" onclick="useHint('${id}')">${n?'עוד רמז':'תני לי רמז'} —5 🏆</button>`:'';return `<div id="h-${id}">${shown}${btn}</div>`}
+function useHint(id){S.hints[id]=(S.hints[id]||0)+1;add(-5);renderLevel(S.level)}
+function showPackingModal(){$('packingModal').classList.remove('hidden')} function closePackingModal(){$('packingModal').classList.add('hidden')}
+function timer(btn,n=24){btn.disabled=true;let x=n;btn.textContent=x;let t=setInterval(()=>{x--;btn.textContent=x;if(x<=0){clearInterval(t);btn.textContent='TIME!';add(10)}},1000)}
+function replay(id){const m={roomkey:'ב־Cafe Marie הופיע לרגע: ROOM KEY: 2',balloons:'במסך הראשון הופיעו 8 בלונים 🎈',file05:'בסיום הארכיון הופיע FILE 05',code04:'ב־GET READY הופיע CODE: 04'};alert(m[id]);add(-5)}
+function nextBtn(i,label='LEVEL COMPLETE ✓'){return `<div class="card center"><h3>${label}</h3>${i<9?`<button onclick="completeLevel(${i})">המשיכי לשלב הבא</button>`:''}</div>`}
+function completeLevel(i){if(i<9){if(!S.unlocked.includes(i+1))S.unlocked.push(i+1);S.level=i+1;save();renderLevel(i+1)}}
+function renderStart(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><div style="font-size:28px">🎈🎈🎈🎈🎈🎈🎈🎈</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
 function start(){S.started=true;save();renderHome()}
-function addScore(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
-function choose(key,correct,msg){if(S.answered[key])return;S.answered[key]=true;if(correct)addScore(10);save();document.getElementById('fb-'+key).innerHTML=msg;document.getElementById('fb-'+key).classList.remove('hidden')}
-function nav(level){S.level=level;save();renderLevel(level)}
-function unlock(id){if(!S.unlocked.includes(id))S.unlocked.push(id);save();nav(id)}
-function renderStart(){document.getElementById('topbar').classList.add('hidden');document.getElementById('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
-function renderHome(){document.getElementById('topbar').classList.remove('hidden');document.getElementById('gmBtn').classList.remove('hidden');updateTop();let route=L.map(x=>`<div class="route-item ${S.unlocked.includes(x.id)?'':'locked'}"><span>${S.unlocked.includes(x.id)?(x.id===S.level?'▶':'✓'):'🔒'} ${S.unlocked.includes(x.id)?x.name:'CLASSIFIED'}</span><span class="small">LEVEL ${x.id}</span></div>`).join('');screenEl.innerHTML=`<div class="card"><div class="small">CURRENT MISSION</div><h2>${L[S.level].name}</h2><button onclick="renderLevel(${S.level})">CONTINUE</button></div><div class="card"><h3>🚨 BIRTHDAY DISASTER METER™</h3><p>${S.disaster<20?'🟢 EVERYTHING SUSPICIOUSLY FINE':S.disaster<50?'🟠 WE MAY HAVE AN INCIDENT':'🔴 THIS IS NOW A STORY'}</p></div><div class="route">${route}</div><button class="ghost" onclick="renderArchives()">🗃️ CLASSIFIED FILES</button>`}
-function gate(next){return `<div class="card"><h3>NEXT LEVEL 🔒</h3><p class="sub">המשימה הבאה נפתחת רק עם Mission Code.</p><div class="code"><input id="codeIn" inputmode="numeric" placeholder="•••"><button style="max-width:120px;margin:0" onclick="checkCode(${next})">UNLOCK</button></div></div>`}
-function checkCode(next){let v=document.getElementById('codeIn').value.trim();if(v===L[next].code){unlock(next)}else toast('❌ WRONG CODE')}
-function q(key,text,answers){return `<div class="card"><div class="q">${text}</div><div class="answers">${answers.map(a=>`<button class="answer" onclick="choose('${key}',${a.c},\`${a.m}\`)">${a.t}</button>`).join('')}</div><div id="fb-${key}" class="feedback hidden"></div></div>`}
-function renderLevel(i){S.level=i;save();document.getElementById('topbar').classList.remove('hidden');document.getElementById('gmBtn').classList.remove('hidden');let h='';
-if(i===0)h=`<div class="hero"><div class="gold">LEVEL 0</div><h2>🎒 PACKING MISSION</h2><p>מחר מתחיל המשחק. את לא יודעת לאן. את לא יודעת מה עושים. ואת בהחלט לא מקבלת לו״ז.</p></div>${q('p1','מחר מישהו זר כנראה ייגע בך במשך כמעט שעה. מה כדאי לקחת?',[{t:'צו הרחקה',c:false,m:'❌ ניסיון יפה.'},{t:'בגד ים',c:true,m:'✅ חשוד מאוד. ITEM UNLOCKED: בגד ים.'},{t:'אפוד קרמי',c:false,m:'❌ זה לא מילואים.'},{t:'נתאי',c:false,m:'❌ הוא כבר מגיע בחבילה.'}])}${q('p2','בערב תידרשי להיראות כאילו נתאי השקיע ביום הזה הרבה יותר ממה שהוא באמת השקיע.',[{t:'פיג׳מה',c:false,m:'❌ לא הפעם.'},{t:'בגדי ספורט',c:false,m:'❌ אוגוסט, אבל תרגיעי.'},{t:'אאוטפיט יפה לערב',c:true,m:'✅ ITEM UNLOCKED: בגדי ערב.'},{t:'מדי ב׳',c:false,m:'❌ trauma detected.'}])}<div class="card"><h3>PACKING LIST UNLOCKED 🔓</h3><p>בגד ים • אאוטפיט לערב • בגדים ליום למחרת • פיג׳מה • תחתונים/גרביים • כלי רחצה/איפור • מטען • משקפי שמש</p><div class="feedback">⚠️ בבקשה לוודא שהשמלות באמת בתוך התיק.<br><b>Hotel Cramim, 2025. Never Forget.</b></div></div>${gate(1)}`;
-if(i===1)h=`<div class="hero"><div class="gold">LEVEL 1</div><h2>☀️ GOOD MORNING, BIRTHDAY GIRL</h2><p>24. ארבע שנים יחד. והיום מתחיל מבחן נוסף.</p></div>${q('g1','כמה שנים נתאי ועמית ביחד?',[{t:'2',c:false,m:'❌ מעליב.'},{t:'3',c:false,m:'❌ כמעט.'},{t:'4',c:true,m:'✅ 4 YEARS. ועדיין לא הצלחת להיפטר ממנו.'},{t:'מרגיש כמו 17',c:false,m:'✅ רגשית נכון. עובדתית לא.'}])}<div class="card"><h3>💍 SIDE QUEST AVAILABLE</h3><p>לפני שמתחילים את יום ההולדת באמת... יש עניין קטן שצריך לסדר.</p><p class="big center">📄 + 💍 + 🇮🇱 = 😭</p></div>${gate(2)}`;
-if(i===2)h=`<div class="hero"><div class="gold">LEVEL 2</div><h2>💍 THE RABBINATE</h2></div>${q('r1','מה הדבר הכי רומנטי שאפשר לעשות בבוקר יום הולדת?',[{t:'ארוחת בוקר מול הים',c:false,m:'❌ WRONG. התשובה היא בירוקרטיה ישראלית.'},{t:'מסאז׳ זוגי',c:false,m:'❌ עוד לא.'},{t:'לפתוח תיק נישואים',c:true,m:'✅ לצערנו נכון.'},{t:'להישאר במיטה',c:false,m:'❌ חלום יפה.'}])}<div class="card"><h3>SIDE QUEST COMPLETE ✅</h3><p>📄 תיק: נפתח<br>👰 כלה: secured<br>🤵 חתן: unfortunately also secured</p><p><b>BIRTHDAY DISASTER METER™: 🟢 ${S.disaster}%</b></p></div>${gate(3)}`;
-if(i===3)h=`<div class="hero"><div class="gold">LEVEL 3</div><h2>☕ BACK WHERE IT ALL BEGAN</h2></div>${q('c1','העיר שבה היה הדייט הראשון שאנחנו מסרבים להכיר בו כדייט, ובה התרחש Birthday Incident 2023.',[{t:'תל אביב',c:false,m:'❌ לא.'},{t:'ראשון לציון',c:true,m:'✅ RISHON LEZION UNLOCKED.'},{t:'אשקלון',c:false,m:'❌ נסי שוב.'},{t:'פאפוס',c:false,m:'❌ את פאפוס שומרים להמשך.'}])}${q('c2','איפה היה ה״דייט שלא היה דייט״?',[{t:'מסעדה',c:false,m:'❌ יותר מדי רשמי.'},{t:'סינמה סיטי',c:false,m:'❌'},{t:'חוף 4×4',c:true,m:'✅ נתאי בשחור־לבן. שניכם: ״זה לא דייט״. Sure.'},{t:'פטריקס',c:false,m:'❌ זה כבר תיק אחר.'}])}<div class="card"><h2>☕ CAFE MARIE</h2><p>FIRST REAL REWARD UNLOCKED 🔓</p><p>OBJECTIVE: לאכול.<br>BONUS OBJECTIVE: לא לשאול מה עושים אחרי.</p></div>${gate(4)}`;
-if(i===4)h=`<div class="hero"><div class="gold">LEVEL 4</div><h2>🌇 ESCAPE FROM RISHON</h2></div>${q('e1','עיר שבה יש ים, אין חניה, כל דבר עולה פי 2 ואיכשהו אנחנו עדיין נוסעים אליה מרצון.',[{t:'תל אביב',c:true,m:'✅ TEL AVIV UNLOCKED 🌇'},{t:'חיפה',c:false,m:'❌'},{t:'אשדוד',c:false,m:'❌'},{t:'הרצליה',c:false,m:'❌ close energy, wrong city.'}])}<div class="card"><h3>🏨 HOTEL: CLASSIFIED 🔒</h3><p>יש לך עוד עבודה.</p></div>${gate(5)}`;
-if(i===5)h=`<div class="hero"><div class="gold">LEVEL 5</div><h2>🏨 GUESS THE HOTEL</h2><p>3 ניסיונות. כל ניחוש שגוי = מינוס 5.</p></div>${q('h1','🌊 מול הים • 👑 השם נשמע מלכותי • 🏖️ ואת לא חוזרת הביתה הלילה',[{t:'Royal Beach',c:true,m:'✅ HOTEL UNLOCKED: ROYAL BEACH 🏨'},{t:'The Jaffa',c:false,m:'❌ -5 POINTS'},{t:'Hilton',c:false,m:'❌ -5 POINTS'},{t:'David InterContinental',c:false,m:'❌ -5 POINTS'}])}<div class="card"><h3>CHECK-IN COMPLETE</h3><p>Cute. חשבת שהגענו לפרס?</p><div class="meter"><div style="width:40%"></div></div><p class="center">DAY PROGRESS 40%</p></div>${gate(6)}`;
-if(i===6)h=`<div class="hero"><div class="gold">LEVEL 6</div><h2>🧖‍♀️ SPA.exe</h2></div>${q('s1','אחד מהבאים הוזמן עבורך:',[{t:'🏋️‍♀️ אימון',c:false,m:'❌ ביום הולדת? נתאי לא אמיץ עד כדי כך.'},{t:'💆‍♀️ מסאז׳',c:true,m:'✅ חשוד מאוד. או שאת מכירה אותו טוב מדי, או שהבגד ים הסגיר.'},{t:'🧹 ניקיון חדר',c:false,m:'❌ באמת?'},{t:'🏃‍♀️ ריצה בטיילת',c:false,m:'❌ לא.'}])}<div class="card"><h2>SPA TIME 🔓</h2><p>📍 Royal Beach<br>🕐 ${S.settings.spaTime}<br>⏱️ ${S.settings.spaDuration}</p></div>${gate(7)}`;
-if(i===7)h=`<div class="hero"><div class="gold">LEVEL 7</div><h2>👗 GET READY</h2><p>יש לך עד 20:45 להיות מוכנה. Destination: CLASSIFIED.</p></div>${q('qf1','על מה הייתה השיחה הראשונה שלנו?',[{t:'צבא',c:false,m:'❌'},{t:'זוגיות',c:false,m:'❌'},{t:'ניילון ניילוץ',c:true,m:'✅ וכנגד כל הסיכויים, מזה יצאה חתונה.'},{t:'משהו נורמלי',c:false,m:'❌ מעולם לא.'}])}${q('qf2','איפה הייתה הנשיקה הראשונה שלנו?',[{t:'ראשון',c:false,m:'❌ הרבנות הייתה הבוקר. יש עוד זמן לבטל.'},{t:'תל אביב',c:false,m:'❌'},{t:'סיני',c:true,m:'✅ SINAI 🇪🇬'},{t:'אילת',c:false,m:'❌'}])}${q('qf3','מה עמית פעם שנאה שקוראים לה?',[{t:'חינוכית',c:true,m:'✅ החינוכית מרוצה. סליחה.'},{t:'נסיכה',c:false,m:'❌'},{t:'גברת',c:false,m:'❌'},{t:'בוסית',c:false,m:'❌'}])}${q('qf4','מה מידת הנעליים של נתאי?',[{t:'42',c:false,m:'❌ ארבע שנים יחד בשביל זה?'},{t:'43',c:false,m:'❌'},{t:'44',c:true,m:'✅ סוף סוף מישהי יכולה לקנות לו נעליים.'},{t:'45',c:false,m:'❌'}])}${q('qf5','מה היה חלום הילדות של נתאי?',[{t:'שף',c:false,m:'❌'},{t:'מפיק מוזיקלי',c:true,m:'✅ PRODUCER NITAY UNLOCKED 🎧'},{t:'כדורגלן',c:false,m:'❌'},{t:'טייס',c:false,m:'❌'}])}<div class="card"><h3>🦩 FLAMINGO CHALLENGE</h3><p>עמדי 10 שניות על רגל אחת.</p><button onclick="flamingo(this)">START 10 SEC TIMER</button></div>${gate(8)}`;
-if(i===8)h=`<div class="hero"><div class="gold">LEVEL 8</div><h2>🍽️ WHERE THE F*CK ARE WE GOING?</h2><p>20:45 • 3 ניסיונות • רמז נוסף = מינוס נקודות.</p></div><div class="card"><h3>HINT #1</h3><p>המקום הבא לא נבחר בשביל השקט.</p><h3>HINT #2</h3><p>זה ערב. זה תל אביב. כדאי שבאת רעבה.</p><h3>HINT #3</h3><p>השם שלו נשמע כאילו חזרנו לתקופת בית שני.</p></div>${q('qum','אז לאן?', [{t:'QUMRAN',c:true,m:'✅ HOLY SH*T. SHE GOT IT. 21:30 🍽️'},{t:'OPA',c:false,m:'❌'},{t:'Taizu',c:false,m:'❌'},{t:'Mashya',c:false,m:'❌'}])}<div class="card center"><h3>GAME PAUSED</h3><p>בלי שאלות. בלי משימות. בלי נקודות.<br><b>Enjoy your dinner ❤️</b></p></div>${gate(9)}`;
-if(i===9)h=`<div class="hero final"><div class="gold">FINAL BOSS</div><h2>🏆 ONE. LAST. MISSION.</h2><p>92% IS NOT 100%.</p></div>${q('f1','מה המאכל האהוב על נתאי?',[{t:'סטייק',c:true,m:'✅ LOCK 1 OPEN'},{t:'סושי',c:false,m:'❌'},{t:'פסטה',c:false,m:'❌'},{t:'פיצה',c:false,m:'❌'}])}${q('f2','באיזה טסט נתאי עבר?',[{t:'ראשון',c:false,m:'❌'},{t:'שני',c:false,m:'❌'},{t:'שלישי',c:true,m:'✅ LOCK 2 OPEN'},{t:'רביעי',c:false,m:'❌'}])}${q('f3','כמה פעמים נתאי היה במיון?', [{t:'פעם אחת',c:false,m:'❌'},{t:'פעמיים',c:true,m:'✅ LOCK 3 OPEN'},{t:'3',c:false,m:'❌'},{t:'4',c:false,m:'❌'}])}${q('f4','איך כמעט קראו לעמית?', [{t:'עומר',c:true,m:'✅ LOCK 4 OPEN'},{t:'נועה',c:false,m:'❌'},{t:'מאיה',c:false,m:'❌'},{t:'חינוכית',c:false,m:'GAME OVER. ביקשת את זה בעצמך.'}])}<div class="card final center"><h2>🔐 FINAL CODE</h2><div class="big gold">${S.settings.safe}</div><p>המתנה שלך מחכה בכספת בחדר.</p><button onclick="showEnding()">פתחתי את הכספת ❤️</button></div>`;
-screenEl.innerHTML=h}
-function flamingo(btn){btn.disabled=true;let n=10;btn.textContent=n;let t=setInterval(()=>{n--;btn.textContent=n;if(n<=0){clearInterval(t);btn.textContent='🦩 VERIFIED +10';addScore(10)}},1000)}
-function renderArchives(){screenEl.innerHTML=`<div class="hero"><h2>🗃️ CLASSIFIED FILES</h2><p>ארכיון תקריות יום ההולדת</p></div><div class="card archive"><h3>2023 — THE GREAT AFTER INCIDENT</h3><p>עמית ארגנה לעצמה חגיגה בפטריקס. נתאי יצא במיוחד לאפטר, היה אופטימי לגבי המשך הערב, ובסוף — חוּזְלַ״ש. בבוקר: אוטובוסים לקריית שמונה.</p></div><div class="card archive"><h3>2024 — THE 1:43 INCIDENT</h3><p>הברכה איחרה בשעה ו־43 דקות. החשוד היה בכותל עם חברים. בהמשך: יקב + רכיבה על סוסים = redemption.</p></div><div class="card archive"><h3>2025 — THE MISSING DRESSES</h3><p>כרמים: מלון ✅ זוג ✅ שמלות ❌. חזרנו להביא אותן. Never Forget.</p></div><div class="card archive"><h3>2026 — ACTIVE INVESTIGATION</h3><p>Disaster Meter: ${S.disaster}%</p></div><button onclick="renderHome()">חזרה למשחק</button>`}
-function showEnding(){screenEl.innerHTML=`<div class="hero final"><div class="gold">GAME COMPLETE ❤️</div><h1>100%</h1><p>ארבע שנים של חוויות, טיולים, צחוקים, פאדיחות וימי הולדת מוצלחים יותר ומוצלחים פחות.</p><p>והשנה הזאת קצת אחרת — כי זה יום ההולדת האחרון שלך לפני שאנחנו מתחתנים.</p><p>מחוף 4×4, דרך סיני ועד פאפוס, הדבר שאני הכי מחכה לו עדיין לפנינו.</p><h2>יום הולדת שמח, מאמי ❤️</h2><div class="card"><div class="small">NEXT LEVEL</div><h1 class="gold">08.10.2026 💍</h1><p>COHEN × COHEN</p></div><p class="small">FINAL SCORE: ${S.score}</p></div>`}
-document.getElementById('gmBtn').onclick=()=>{let p=prompt('Game Master code');if(p==='2418')openGM();else toast('ACCESS DENIED')}
-function openGM(){document.getElementById('gmPanel').classList.remove('hidden');gmDisasterEl.value=S.disaster;gmScoreEl.value=S.score;gmSpaTimeEl.value=S.settings.spaTime;gmSpaDurationEl.value=S.settings.spaDuration;gmSafeEl.value=S.settings.safe;gmLevelEl.innerHTML=L.map(x=>`<option value="${x.id}">${x.id} — ${x.name}</option>`).join('')}
-function closeGM(){document.getElementById('gmPanel').classList.add('hidden')}
-function applyDisaster(){S.disaster=+gmDisasterEl.value;save();toast('Disaster Meter updated')}
-function applyScore(){S.score=+gmScoreEl.value;save();toast('Score updated')}
-function saveSettings(){S.settings.spaTime=gmSpaTimeEl.value||'TBD';S.settings.spaDuration=gmSpaDurationEl.value||'TBD';S.settings.safe=gmSafeEl.value||'2584';save();toast('Settings saved')}
-function unlockLevel(){let id=+gmLevelEl.value;if(!S.unlocked.includes(id))S.unlocked.push(id);S.level=id;save();closeGM();renderLevel(id)}
-function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGame');location.reload()}}
+function renderHome(){$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');topUI();screenEl.innerHTML=`<div class="card"><div class="small">CURRENT MISSION</div><h2>${LEVELS[S.level]}</h2><button onclick="renderLevel(${S.level})">CONTINUE</button></div><div class="card"><h3>🚨 BIRTHDAY DISASTER METER™</h3><p>${S.disaster<20?'🟢 EVERYTHING SUSPICIOUSLY FINE':S.disaster<50?'🟠 WE MAY HAVE AN INCIDENT':'🔴 THIS IS NOW A STORY'}</p></div>${LEVELS.map((x,i)=>`<div class="route-item ${S.unlocked.includes(i)?'':'locked'}">${S.unlocked.includes(i)?(i===S.level?'▶':'✓'):'🔒'} ${S.unlocked.includes(i)?x:'CLASSIFIED'}</div>`).join('')}`}
+function pauseScreen(title,text,next){screenEl.innerHTML=`<div class="pause"><h1>${title}</h1><p class="sub">${text}</p><button onclick="renderLevel(${next})">I'M BACK</button></div>`}
+
+function renderLevel(i){
+ S.level=i;save();$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');let h=`<div class="hero"><div class="gold">LEVEL ${i}</div><h2>${LEVELS[Math.floor(i)]}</h2></div>`;
+ if(i===0){
+ h+=`<div class="card"><p>מחר מתחיל המשחק. את לא יודעת לאן. את לא יודעת מה עושים. והטעות הראשונה שלך הייתה לתת לנתאי לתכנן הכול.</p><h3>MISSION: PACK YOUR SH*T 🎒</h3></div>`;
+ h+=mcq('p1','מחר מישהו זר כנראה ייגע בך במשך כמעט שעה. מה כדאי שיהיה בתיק?',[{t:'צו הרחקה',ok:false,msg:'❌ ניסיון יפה.'},{t:'בגד ים',ok:true,msg:'✅ ITEM UNLOCKED: בגד ים.'},{t:'אפוד קרמי',ok:false,msg:'❌ זה לא מילואים.'},{t:'נתאי',ok:false,msg:'❌ הוא כבר מגיע בחבילה.'}]);
+ h+=textQ('p2','בערב תצטרכי להיראות כאילו נתאי השקיע ביום הזה הרבה יותר ממה שהוא באמת השקיע. מה נכנס לתיק?',['שמלה','בגדי ערב','אאוטפיט','outfit'],'✅ EVENING MODE UNLOCKED 👗');
+ h+=mcq('p3','מחר את בת 24. בערך כמה שעות כבר היית בעולם?',[{t:'≈24,000',ok:false,msg:'❌ נמוך מדי.'},{t:'≈210,000',ok:true,msg:'✅ EXISTENCE CONFIRMED.'},{t:'≈876,000',ok:false,msg:'❌ קשוח.'},{t:'יותר מדי בשביל לסבול את נתאי',ok:false,msg:'רגשית נכון.'}]);
+ h+=mcq('p4','איזה מהדברים הבאים את הכי פחות צריכה לדעת כרגע?',[{t:'איפה ישנים',ok:false,msg:'❌'},{t:'מה עושים בצהריים',ok:false,msg:'❌'},{t:'איפה אוכלים בערב',ok:false,msg:'❌'},{t:'את כולם',ok:true,msg:'✅ CLASSIFIED MEANS CLASSIFIED.'}]);
+ h+=`<div class="card"><h3>PACKING LIST UNLOCKED 🔓</h3><p>בגד ים • בגדי ערב • בגדים למחר • פיג׳מה • תחתונים/גרביים • כלי רחצה/טיפוח • מטען • משקפי שמש</p><button onclick="showPackingModal()">בדיקת תיק אחרונה ⚠️</button></div>`+nextBtn(0,'GET SOME SLEEP. TOMORROW WE PLAY.');
+ }
+ if(i===1){
+ h+=`<div class="card"><h3>GOOD MORNING, BIRTHDAY GIRL 🎂</h3><p>24. יום הולדת אחרון לפני החתונה.</p><div class="small">CASE № 24-08</div></div>`;
+ h+=textQ('b1','18 + ? = הגיל של עמית היום',['6'],'✅ 24 YEARS SUCCESSFULLY CALCULATED.');
+ h+=textQ('b2','בלי לחזור אחורה: כמה לבבות מופיעים למעלה במשחק?',['3','שלוש'],'✅ GOOD. SHE’S PAYING ATTENTION.');
+ h+=mcq('b3','עמית נולדה ב־2002. מה הכי נכון לתאר את זה?',[{t:'Vintage 2002',ok:true,msg:'✅ VINTAGE 2002.'},{t:'דור האלפא',ok:false,msg:'❌'},{t:'1990s kid',ok:false,msg:'❌'},{t:'לא מדברים על גיל',ok:false,msg:'Fair.'}]);
+ h+=`<div class="card"><h3>TODAY'S FIRST MYSTERY 🔎</h3>${hintBlock('rabbinate',H.rabbinate)}${textQ('rabbinateAns','לאן נוסעים?',['רבנות','הרבנות','תיק נישואים','תיק נישואין','פתיחת תיק'],'🔓 DESTINATION UNLOCKED: הרבנות 💍📄',15)}</div>`+nextBtn(1);
+ }
+ if(i===2){
+ h+=`<div class="card"><p><b>LOCATION:</b> הרבנות<br><b>ROMANCE:</b> 3%<br><b>BUREAUCRACY:</b> 97%</p><h3>GET LEGALLY CLOSER TO COHEN 💍</h3></div>`;
+ h+=mcq('r1','מה עמית הייתה מעדיפה לקבל כרגע?',[{t:'🍳 ארוחת בוקר',ok:true,msg:'INTERESTING CHOICE... 👀'},{t:'💆‍♀️ מסאז׳',ok:false,msg:'REQUEST RECEIVED.'},{t:'🛍️ שופינג',ok:false,msg:'נתאי עזב את המשחק.'},{t:'📄 עוד טופס',ok:false,msg:'אנחנו מודאגים ממך.'}]);
+ h+=textQ('r2','אם הגיל שלך הוא 24, כמה צריך להוסיף ל־18?',['6'],'✅ עדיין 24.');
+ h+=`<div class="card center"><div style="font-size:30px">💍💍💍💍💍</div><h3>ACHIEVEMENT UNLOCKED</h3><p>FUTURE MRS. COHEN</p></div>`;
+ h+=`<div class="card"><h3>WHERE TO NEXT? ☕</h3>${hintBlock('marie',H.marie)}${textQ('marieAns','מה היעד הבא?',['קפה מארי','מארי','cafe marie','marie'],'☕ DESTINATION UNLOCKED: CAFE MARIE — ראשון לציון',15)}</div>`+nextBtn(2);
+ }
+ if(i===3){
+ h+=`<div class="card"><h3>EMERGENCY BREAKFAST ACTIVATED ☕</h3><p>EAT. DRINK. PAY ATTENTION.</p></div>`;
+ h+=textQ('c1','בלי להסתכל אחורה: מה היה כתוב מתחת לשם המשחק במסך הפתיחה?',['season 4','סיזן 4'],'✅ OKAY, SHE’S ACTUALLY WATCHING.',15);
+ h+=`<div class="card"><h3>TABLE INTELLIGENCE 🕵️‍♀️</h3><p>הניחי את הטלפון עם המסך כלפי מטה ל־10 שניות והסתכלי סביב.</p><button onclick="timer(this,10)">START 10 SEC</button></div>`;
+ h+=textQ('c2','מה הדבר הראשון שאכלת היום?',['*'],'✅ נרשם בתיק יום ההולדת.',0,'כתבי מה אכלת...');
+ h+=textQ('c3','אם נתאי היה משלם ₪1 על כל יום שחיית עד גיל 24, בערך כמה זה?',['8766','8760','8765','8767','8,766'],'✅ ועדיין זול יותר מחתונה.');
+ h+=textQ('c4','איפה היה ה״דייט שלא היה דייט״?',['חוף 4x4','חוף 4×4','4x4','ארבע על ארבע'],'🏖️ Narrator: it was absolutely a date.');
+ h+=`<div class="card"><span class="memory-chip">ROOM KEY: 2</span><h3>WHERE TO NEXT?</h3>${hintBlock('ta',H.ta)}${textQ('taAns','לאיזו עיר ממשיכים?',['תל אביב','tel aviv'],'🌇 TEL AVIV UNLOCKED',15)}</div>`+nextBtn(3);
+ }
+ if(i===4){
+ h+=textQ('t1','אם כל שנה בחיים של עמית הייתה דקה, כמה זמן היו כל החיים שלה?',['24','24 דקות'],'✅ 24 דקות.');
+ h+=`<div class="card"><h3>24 SECOND CHALLENGE ⏱️</h3><button onclick="timer(this,24)">START 24 SEC</button></div>`;
+ h+=textQ('t2','איזה מספר הופיע ליד ROOM KEY בארוחת הבוקר?',['2','שתיים'],'✅ SHE NOTICED 😳',15)+`<div class="card"><button class="secondary" onclick="replay('roomkey')">REPLAY MEMORY —5</button></div>`;
+ h+=`<div class="card"><h3>WHERE ARE WE SLEEPING TONIGHT? 👑🌊</h3>${hintBlock('hotel',H.hotel)}${textQ('hotelAns','שם המלון:',['royal beach','רויאל ביץ','רויאל ביץ׳'],'🔓 ROYAL BEACH TEL AVIV — CHECK-IN 14:00',20)}</div>`;
+ h+=`<div class="card center"><h3>🏆 HOTEL HUNTER</h3><span class="memory-chip">EST. 2002</span></div>`+nextBtn(4);
+ }
+ if(i===5){
+ h+=textQ('h1','מה מספר החדר שלנו?',[S.settings.room],'✅ BASIC SURVIVAL SKILLS CONFIRMED.');
+ h+=textQ('h2','Observation Challenge בחדר — מה התשובה שה־Game Master הגדיר?',[S.settings.roomObs],'✅ HOTEL DETECTIVE',15,'תשובה לפי מה שראית...');
+ h+=`<div class="card"><h3>24 SECOND CHALLENGE</h3><p>יש לך 24 שניות להביא משהו בצבע בז׳.</p><button onclick="timer(this,24)">START</button></div>`;
+ h+=`<div class="card"><span class="memory-chip">PROTOCOL: 04</span><h3>WHAT'S NEXT? 🧖‍♀️</h3>${hintBlock('spa',H.spa)}${textQ('spaAns','מה הפעילות הבאה?',['ספא','spa','מסאז','מסאז׳','massage'],'🧖‍♀️ SPA UNLOCKED',15)}<p>🕐 ${S.settings.spaTime}<br>⏱️ ${S.settings.spaDuration}</p></div>`;
+ h+=`<div class="card center"><button onclick="pauseScreen('GAME PAUSED','לכי ליהנות מהספא. הטלפון יכול לחכות. ❤️',6)">PAUSE — I'M GOING TO THE SPA</button></div>`;
+ }
+ if(i===6){
+ h+=`<div class="card"><h3>🗃️ BIRTHDAY ARCHIVES UNLOCKED</h3><p>2023 • 2024 • 2025</p></div>`;
+ h+=mcq('a1','2023 — מי ארגן לעמית את החגיגה בפטריקס?',[{t:'עמית',ok:true,msg:'✅ FILE DECLASSIFIED.'},{t:'נתאי',ok:false,msg:'❌'},{t:'החברות',ok:false,msg:'❌'},{t:'Tomorrowland',ok:false,msg:'שאפתני.'}]);
+ h+=textQ('a2','2023 — מה חיכה לנתאי בבוקר שאחרי?',['קריית שמונה','אוטובוסים לקריית שמונה'],'✅ אוטובוסים לקריית שמונה.');
+ h+=textQ('a3','2024 — בכמה זמן איחרה הברכה?',['1:43','שעה ו43','שעה ו־43','שעה ו-43'],'✅ עמית זוכרת.');
+ h+=textQ('a4','2024 — איפה היה החשוד?',['כותל','הכותל'],'✅ REDEMPTION: יקב + סוסים.');
+ h+=textQ('a5','2025 — מה קרה אחרי שגילינו שהשמלות נשארו בבית?',['חזרנו','חזרנו להביא','חזרנו להביא את השמלות'],'👗 NEVER FORGET.');
+ h+=textQ('a6','כמה ימי הולדת היו לעמית לפני יום ההולדת הנוכחי?',['23'],'✅ 23. הנוכחי עדיין בחקירה.');
+ h+=`<div class="card center"><h3>ARCHIVE VERIFIED</h3><span class="memory-chip">FILE 05</span></div>`+nextBtn(6,'FREE TIME MODE 🛋️');
+ }
+ if(i===7){
+ h+=`<div class="card"><h3>OPERATION: GET HOT</h3><p>DEADLINE: 20:45 • DESTINATION: CLASSIFIED</p></div>`;
+ h+=`<div class="card"><h3>24 SECOND PANIC</h3><p>הביאי את הנעליים שאת מתכננת לנעול הערב.</p><button onclick="timer(this,24)">START</button></div>`;
+ h+=textQ('g1','מה המזל של עמית?',['אריה','leo'],'♌ MAIN CHARACTER ENERGY CONFIRMED.');
+ h+=textQ('g2','בלי להסתכל למעלה: כמה לבבות היו לך מתחילת המשחק?',['3','שלוש'],'✅ OBSERVATION');
+ h+=mcq('g3','WHITE SUIT BOSS FIGHT — נתאי רוצה חליפה לבנה. מה עמית עושה?',[{t:'מכבדת את הבחירה',ok:false,msg:'❌'},{t:'מסבירה בעדינות',ok:false,msg:'עדין מדי.'},{t:'מבטלת חתונה',ok:false,msg:'קיצוני.'},{t:'אני מרגישה שאנחנו קצת כועסים',ok:true,msg:'💥 CRITICAL HIT. נתאי הפעיל: ✨ תודעת שפע ✨'}]);
+ h+=textQ('g4','אם יש נר אחד לכל 6 שנות חיים, כמה נרות על העוגה?',['4','ארבע'],'✅ 4.');
+ h+=`<div class="card center"><span class="memory-chip">CODE: 04</span><h3>SCANNING...</h3><p>OUTFIT ✓ • SHOES ✓ • PHONE ✓</p></div>`;
+ h+=`<div class="card"><h3>🍽️ FIND TONIGHT'S DESTINATION</h3>${hintBlock('qumran',H.qumran)}${textQ('qumAns','איפה אוכלים הערב?',['קומראן','קומרן','qumran'],'🍽️ QUMRAN — 21:30',20)}</div>`+nextBtn(7);
+ }
+ if(i===8){
+ h+=`<div class="card"><h3>DESTINATION CONFIRMED ✅</h3><h2>QUMRAN</h2><p>ניסיון ראשון: ט״ו באב ❌<br>ניסיון שני: יום הולדת 24 ✅</p></div>`;
+ h+=textQ('d1','רגע לפני שנכנסים: מה השעה עכשיו בערך?',['20','21',':'],'✅ TEMPORAL AWARENESS CONFIRMED.',10,'למשל 21:27');
+ h+=textQ('d2','מה לדעתך יהיה הדבר הראשון שנתאי יזמין?',['*'],'🔮 PREDICTION SAVED.',0,'ניחוש חופשי...');
+ h+=`<div class="card center"><button onclick="pauseDinner()">PAUSE GAME 🍽️</button></div>`;
+ }
+ if(i===8.5){
+ h=`<div class="hero"><h2>WELCOME BACK.</h2><p>DAY PROGRESS: 87%</p><h1>CUTE.</h1></div>`;
+ h+=textQ('cp1','מה הייתה התחנה הראשונה של היום?',['רבנות','הרבנות'],'✅ CHECKPOINT');
+ h+=textQ('cp2','איזה מספר הופיע ליד ROOM KEY?',['2'],'✅ CHECKPOINT');
+ h+=textQ('cp3','מה היה THE 1:43 INCIDENT?',['ברכה','איחור','איחור בברכה'],'✅ CHECKPOINT');
+ h+=`<div class="card center"><p>ENDING BIRTHDAY GAME...</p><p>87%</p><h2>ERROR.</h2><p>REWARD NOT FOUND.</p><h1>⚠️ WAIT.</h1><button onclick="completeLevel(8)">RETURN TO THE HOTEL</button></div>`;
+ }
+ if(i===9){
+ h+=`<div class="card"><h3>LEVEL 9A — FIND IT 🔎</h3><p>משהו מחכה לך בחדר. אני לא אגיד מה, ואני לא אגיד איפה.</p>${hintBlock('safe',H.safe)}${textQ('safePlace','איפה נמצא הדבר שאת מחפשת?',['כספת','הכספת','safe'],'🔐 LOCATION CONFIRMED: THE SAFE',15)}</div>`;
+ h+=`<div class="card"><h3>LEVEL 9B — THE FOUR LOCKS</h3><p>ארבע ספרות. ארבע שאלות. NO MULTIPLE CHOICE.</p></div>`;
+ h+=textQ('l1','LOCK #1 — איזה מספר הופיע ליד ROOM KEY?',['2'],'🔓 LOCK 1 OPEN — 2',0)+`<button class="secondary" onclick="replay('roomkey')">REPLAY MEMORY —5</button>`;
+ h+=textQ('l2','LOCK #2 — איזה מספר הופיע ליד FILE כשארכיון ימי ההולדת נסגר?',['5','05'],'🔓 LOCK 2 OPEN — 5',0)+`<button class="secondary" onclick="replay('file05')">REPLAY MEMORY —5</button>`;
+ h+=textQ('l3','LOCK #3 — כמה בלונים היו במסך הראשון?',['8','שמונה'],'🔓 LOCK 3 OPEN — 8',0)+`<button class="secondary" onclick="replay('balloons')">REPLAY THE NIGHT —5</button>`;
+ h+=textQ('l4','LOCK #4 — איזה מספר הופיע ליד CODE בזמן ההתארגנות?',['4','04'],'🔓 FINAL LOCK OPEN — 4',0)+`<button class="secondary" onclick="replay('code04')">REPLAY MEMORY —5</button>`;
+ if(S.done.l1&&S.done.l2&&S.done.l3&&S.done.l4)h+=`<div class="card final center"><h2>🔐 FINAL CODE UNLOCKED</h2><div class="big gold">${S.settings.safe}</div><p>עכשיו לכי לכספת. ❤️</p><button onclick="showEnding()">פתחתי את הכספת ❤️</button></div>`;
+ else h+=`<div class="card center"><p class="sub">פתרי את כל ארבעת המנעולים כדי לחשוף את הקוד.</p></div>`;
+ }
+ screenEl.innerHTML=h;
+}
+function pauseDinner(){screenEl.innerHTML=`<div class="pause"><h1>🍽️ DINNER MODE</h1><p class="sub">אין שאלות. אין רמזים. שימי את הטלפון בצד ותיהני מהערב. ❤️</p><button onclick="renderLevel(8.5)">DINNER COMPLETE ✓</button></div>`}
+function showEnding(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero final"><div class="gold">GAME COMPLETE ❤️</div><h1>100%</h1><p>עוד יום הולדת אחד שעברנו יחד.</p><p>היו לנו כבר ימי הולדת עם אפטר, ברכה שאיחרה בשעה ו־43 דקות, יקב, סוסים, כרמים ושמלות שהחליטו להישאר בבית.</p><p>אבל השנה הזאת קצת אחרת — כי זה יום ההולדת האחרון שלך לפני שאנחנו מתחתנים.</p><p>מחוף 4×4 בראשון, דרך הנשיקה הראשונה בסיני, ועד ההפתעה בפאפוס — עברנו דרך די ארוכה.</p><h2>והחלק שאני הכי מחכה לו עדיין לפנינו.</h2><h2>יום הולדת שמח, מאמי ❤️</h2><div class="card"><div class="small">NEW LEVEL DETECTED...</div><h1 class="gold">08.10.2026 💍</h1><p>COHEN × COHEN</p><b>COMING SOON.</b></div><p class="small">SEASON 4 — COMPLETE.</p></div>`}
+$('gmBtn').onclick=()=>{if(prompt('Game Master code')==='2418')openGM();else toast('ACCESS DENIED')}
+function openGM(){$('gmPanel').classList.remove('hidden');$('gmDisaster').value=S.disaster;$('gmScore').value=S.score;$('gmSpaTime').value=S.settings.spaTime;$('gmSpaDuration').value=S.settings.spaDuration;$('gmRoom').value=S.settings.room;$('gmRoomObs').value=S.settings.roomObs;$('gmSafe').value=S.settings.safe;$('gmLevel').innerHTML=LEVELS.map((x,i)=>`<option value="${i}">${i} — ${x}</option>`).join('')}
+function closeGM(){$('gmPanel').classList.add('hidden')}
+function saveGM(){S.disaster=+$('gmDisaster').value;S.score=+$('gmScore').value;S.settings.spaTime=$('gmSpaTime').value||'TBD';S.settings.spaDuration=$('gmSpaDuration').value||'TBD';S.settings.room=$('gmRoom').value||'TBD';S.settings.roomObs=$('gmRoomObs').value||'TBD';S.settings.safe=$('gmSafe').value||'2584';let n=+$('gmLevel').value;if(!S.unlocked.includes(n))S.unlocked.push(n);S.level=n;save();closeGM();renderLevel(n)}
+function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV3');location.reload()}}
 if(S.started)renderHome();else renderStart();
-if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});}
+if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
 </script>
-</body></html>
+</body>
+</html>
