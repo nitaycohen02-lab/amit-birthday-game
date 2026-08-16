@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>AMIT'S BIRTHDAY GAME — V5</title>
-<!-- V5 FINAL FLOW -->
+  <title>AMIT'S BIRTHDAY GAME — V6</title>
+<!-- V6: MEMORY + WISH + CARICATURE + STRICT GM GATES -->
   <meta name="description" content="Amit's Birthday Game — Season 4">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -38,7 +38,7 @@
     .pause{min-height:58vh;display:flex;flex-direction:column;justify-content:center;text-align:center}
     .approval-gate{border:1px solid #4a402f;background:linear-gradient(180deg,#18140e,#111);border-radius:20px;padding:18px;margin:14px 0;text-align:center}
     .approval-gate.ready{border-color:#6a5835}.approval-gate.waiting{box-shadow:0 0 0 1px rgba(201,169,106,.12) inset}
-    .approval-gate .status{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}
+    .character{width:100%;border-radius:20px;margin:14px 0;border:1px solid #3a3021;display:block}.wish-quote{font-size:22px;color:var(--gold);font-weight:800;line-height:1.5;padding:16px;border:1px dashed #5b4726;border-radius:18px;margin:14px 0}.approval-gate .status{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}
     .gm-status{padding:12px;border:1px dashed #444;border-radius:14px;margin:12px 0;line-height:1.55}
     @media(max-width:380px){.inline{flex-direction:column}.inline button{width:100%}}
 </style>
@@ -98,10 +98,10 @@
 
 <script>
 const LEVELS=['PACKING MISSION','BIRTHDAY MORNING','THE RABBINATE','CAFE MARIE','ROAD TO TEL AVIV','SOLO SURPRISE','BIRTHDAY ARCHIVES + COUPLES SPA','GET READY','QUMRAN','FINAL BOSS'];
-const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},hints:{},settings:{soloSpaTime:'13:00',soloSpaDuration:'TBD',coupleSpaTime:'17:00',coupleSpaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584'}};
-let S; try{S=JSON.parse(localStorage.getItem('amitGameV5'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},hints:{},wish:'',settings:{soloSpaTime:'13:00',soloSpaDuration:'TBD',coupleSpaTime:'17:00',coupleSpaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584'}};
+let S; try{S=JSON.parse(localStorage.getItem('amitGameV6'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
 const $=id=>document.getElementById(id), screenEl=$('screen');
-function save(){localStorage.setItem('amitGameV5',JSON.stringify(S));topUI()}
+function save(){localStorage.setItem('amitGameV6',JSON.stringify(S));topUI()}
 function topUI(){$('score').textContent=S.score;$('disaster').textContent=S.disaster+'%';$('lvl').textContent=S.level;$('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
 function toast(t){let x=$('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1700)}
 function add(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
@@ -140,8 +140,8 @@ const REQUIRED={
   0:['p1','p2','p3','p4','packingConfirmed'],
   1:['b1','b2','b3','rabbinateAns'],
   2:['r1','r2','marieAns'],
-  3:['c1','table10','c2','c3','c4','taAns'],
-  4:['t1','road24','t2','hotelAns'],
+  3:['memoryViewed','m1','m2','m3','c2','taAns'],
+  4:['t1','road24','t2','hotelAns','birthdayWish'],
   5:['soloSpaAns','soloSpaReturned'],
   6:['h1','h2','a1','a2','a3','a4','a5','a6','coupleSpaAns','coupleSpaReturned'],
   7:['ready24','g1','g2','g3','g4','qumAns'],
@@ -165,9 +165,14 @@ function approveNextLevel(){
   if(!S.unlocked.includes(i+1))S.unlocked.push(i+1);
   S.level=i+1;S.substage='main';save();closeGM();renderLevel(i+1);
 }
-function renderStart(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><div style="font-size:28px">🎈🎈🎈🎈🎈🎈🎈🎈</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
+function renderStart(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><div style="font-size:28px">🎈🎈🎈🎈🎈🎈🎈🎈</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><img class="character" src="amit-cartoon.png" alt="Amit Birthday Game caricature"><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
 function start(){S.started=true;save();renderHome()}
 function renderHome(){$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');topUI();screenEl.innerHTML=`<div class="card"><div class="small">CURRENT MISSION</div><h2>${LEVELS[S.level]}</h2><button onclick="renderLevel(${S.level})">CONTINUE</button></div><div class="card"><h3>🚨 BIRTHDAY DISASTER METER™</h3><p>${S.disaster<20?'🟢 EVERYTHING SUSPICIOUSLY FINE':S.disaster<50?'🟠 WE MAY HAVE AN INCIDENT':'🔴 THIS IS NOW A STORY'}</p></div>${LEVELS.map((x,i)=>`<div class="route-item ${S.unlocked.includes(i)?'':'locked'}">${S.unlocked.includes(i)?(i===S.level?'▶':'✓'):'🔒'} ${S.unlocked.includes(i)?x:'CLASSIFIED'}</div>`).join('')}`}
+function startMemoryChallenge(){
+ screenEl.innerHTML=`<div class="pause"><div class="card center"><h2>MEMORIZE THIS 👀</h2><div style="font-size:38px">🎂 🕐 🎁 👑</div><p><b>5 נרות</b> על העוגה</p><p>השעה: <b>13:00</b></p><p>3 מתנות 🎁🎁🎁</p><span class="memory-chip">QUEEN</span><p class="small">הכרטיס ייעלם בעוד <b id="memCount">8</b> שניות...</p></div></div>`;
+ let n=8;let t=setInterval(()=>{n--;let e=$('memCount');if(e)e.textContent=n;if(n<=0){clearInterval(t);S.done.memoryViewed=true;save();renderLevel(3)}},1000)
+}
+function saveWish(){let v=$('wishInput').value.trim();if(!v){toast('כתבי משאלה אחת ❤️');return}S.wish=v;S.done.birthdayWish=true;save();$('wishSaved').innerHTML='✨ המשאלה נשמרה. המשחק לא שכח.';$('wishSaved').classList.remove('hidden');refreshApprovalGate()}
 function pauseSoloSpa(){
  screenEl.innerHTML=`<div class="pause"><h1>SOLO MISSION 💆‍♀️</h1><p class="sub">הטלפון נשאר בצד.<br>לכי ליהנות מטיפול הראש והקצוות שלך. ❤️</p><p class="small">Game Master is currently busy with classified activity.</p><button onclick="returnFromSoloSpa()">I'M BACK</button></div>`
 }
@@ -197,28 +202,31 @@ function renderLevel(i){
  if(i===2){
  h+=`<div class="card"><p><b>LOCATION:</b> הרבנות<br><b>ROMANCE:</b> 3%<br><b>BUREAUCRACY:</b> 97%</p><h3>GET LEGALLY CLOSER TO COHEN 💍</h3></div>`;
  h+=mcq('r1','מה עמית הייתה מעדיפה לקבל כרגע?',[{t:'🍳 ארוחת בוקר',ok:true,msg:'INTERESTING CHOICE... 👀'},{t:'💆‍♀️ מסאז׳',ok:false,msg:'REQUEST RECEIVED.'},{t:'🛍️ שופינג',ok:false,msg:'נתאי עזב את המשחק.'},{t:'📄 עוד טופס',ok:false,msg:'אנחנו מודאגים ממך.'}]);
- h+=textQ('r2','אם הגיל שלך הוא 24, כמה צריך להוסיף ל־18?',['6'],'✅ עדיין 24.');
+ h+=textQ('r2','על עוגת יום הולדת כתובות רק הספרות של הגיל שלך. מה סכום שתי הספרות?',['6','שש'],'🎂 2 + 4 = 6.');
  h+=`<div class="card center"><div style="font-size:30px">💍💍💍💍💍</div><h3>ACHIEVEMENT UNLOCKED</h3><p>FUTURE MRS. COHEN</p></div>`;
  h+=`<div class="card"><h3>WHERE TO NEXT? ☕</h3>${hintBlock('marie',H.marie)}${textQ('marieAns','מה היעד הבא?',['קפה מארי','מארי','cafe marie','marie'],'☕ DESTINATION UNLOCKED: CAFE MARIE — ראשון לציון',15)}</div>`+nextBtn(2);
  }
  if(i===3){
- h+=`<div class="card"><h3>EMERGENCY BREAKFAST ACTIVATED ☕</h3><p>EAT. DRINK. PAY ATTENTION.</p></div>`;
- h+=textQ('c1','בלי להסתכל אחורה: מה היה כתוב מתחת לשם המשחק במסך הפתיחה?',['season 4','סיזן 4'],'✅ OKAY, SHE’S ACTUALLY WATCHING.',15);
- h+=`<div class="card"><h3>TABLE INTELLIGENCE 🕵️‍♀️</h3><p>הניחי את הטלפון עם המסך כלפי מטה ל־10 שניות והסתכלי סביב.</p><button onclick="timer(this,10,'table10')">START 10 SEC</button></div>`;
- h+=textQ('c2','מה הדבר הראשון שאכלת היום?',['*'],'✅ נרשם בתיק יום ההולדת.',0,'כתבי מה אכלת...');
- h+=textQ('c3','אם נתאי היה משלם ₪1 על כל יום שחיית עד גיל 24, בערך כמה זה?',['8766','8760','8765','8767','8,766'],'✅ ועדיין זול יותר מחתונה.');
- h+=textQ('c4','איפה היה ה״דייט שלא היה דייט״?',['חוף 4x4','חוף 4×4','4x4','ארבע על ארבע'],'🏖️ Narrator: it was absolutely a date.');
- h+=`<div class="card"><span class="memory-chip">ROOM KEY: 2</span><h3>WHERE TO NEXT?</h3>${hintBlock('ta',H.ta)}${textQ('taAns','לאיזו עיר ממשיכים?',['תל אביב','tel aviv'],'🌇 TEL AVIV UNLOCKED',15)}</div>`+nextBtn(3);
+ h+=`<div class="card"><h3>☕ CAFE MARIE — MEMORY MODE</h3><p>הפעם אין שאלת טריוויה על המסך הקודם. יש לך מבחן זיכרון אמיתי.</p></div>`;
+ if(!S.done.memoryViewed){
+   h+=`<div class="card center"><h2>👀 8 SECOND MEMORY</h2><p>כשתלחצי START יופיע כרטיס ל־8 שניות בלבד. אחר כך הוא ייעלם ותקבלי 3 שאלות.</p><button onclick="startMemoryChallenge()">START MEMORY</button></div>`;
+ } else {
+   h+=textQ('m1','כמה נרות הופיעו על העוגה בכרטיס הזיכרון?',['5','חמש'],'🧠 MEMORY #1 — CORRECT');
+   h+=textQ('m2','איזו שעה הופיעה על השעון בכרטיס?',['13:00','13','אחת','1:00'],'🧠 MEMORY #2 — CORRECT');
+   h+=textQ('m3','איזו מילה באנגלית הופיעה על פתק קטן?',['queen'],'🧠 MEMORY #3 — CORRECT');
+   h+=textQ('c2','מה הדבר הראשון שאכלת היום?',['*'],'✅ נרשם בתיק יום ההולדת.',0,'כתבי מה אכלת...');
+   h+=`<div class="card"><span class="memory-chip">ROOM KEY: 2</span><h3>WHERE TO NEXT?</h3>${hintBlock('ta',H.ta)}${textQ('taAns','לאיזו עיר ממשיכים?',['תל אביב','tel aviv'],'🌇 TEL AVIV UNLOCKED',15)}</div>`+nextBtn(3);
+ }
  }
  if(i===4){
  h+=textQ('t1','אם כל שנה בחיים של עמית הייתה דקה, כמה זמן היו כל החיים שלה?',['24','24 דקות'],'✅ 24 דקות.');
  h+=`<div class="card"><h3>24 SECOND CHALLENGE ⏱️</h3><button onclick="timer(this,24,'road24')">START 24 SEC</button></div>`;
  h+=textQ('t2','איזה מספר הופיע ליד ROOM KEY בארוחת הבוקר?',['2','שתיים'],'✅ SHE NOTICED 😳',15)+`<div class="card"><button class="secondary" onclick="replay('roomkey')">REPLAY MEMORY —5</button></div>`;
  h+=`<div class="card"><h3>WHERE ARE WE SLEEPING TONIGHT? 👑🌊</h3>${hintBlock('hotel',H.hotel)}${textQ('hotelAns','שם המלון:',['royal beach','רויאל ביץ','רויאל ביץ׳'],'🔓 ROYAL BEACH TEL AVIV — ARRIVAL 13:00',20)}</div>`;
- h+=`<div class="card center"><h3>🏆 HOTEL HUNTER</h3><span class="memory-chip">EST. 2002</span></div>`+nextBtn(4);
+ h+=`<div class="card center"><h3>🏆 HOTEL HUNTER</h3><span class="memory-chip">EST. 2002</span></div>`; h+=`<div class="card"><h3>🎂 BIRTHDAY WISH</h3><p>אם היית צריכה לבחור דבר אחד שאת מאחלת לעצמך לשנה הקרובה — מה הוא?</p><div class="inline"><input class="free-input" id="wishInput" value="${S.wish||''}" placeholder="המשאלה שלי..."><button onclick="saveWish()">שמרי ✨</button></div><div id="wishSaved" class="feedback ${S.done.birthdayWish?'':'hidden'}">✨ המשאלה נשמרה. המשחק לא שכח.</div></div>`+nextBtn(4);
  }
  if(i===5){
- h+=`<div class="card"><h3>13:00 — FIRST HOTEL SURPRISE</h3><p>הגעת ל־Royal Beach. אבל לפני חדר, מנוחה או שאלות מיותרות — יש משימה אחת.</p><p class="sub">הפעם נתאי לא מצטרף אלייך.</p></div>`;
+ h+=`<img class="character" src="amit-cartoon.png" alt="Amit caricature"><div class="card"><h3>13:00 — FIRST HOTEL SURPRISE</h3><p>הגעת ל־Royal Beach. אבל לפני חדר, מנוחה או שאלות מיותרות — יש משימה אחת.</p><p class="sub">הפעם נתאי לא מצטרף אלייך.</p></div>`;
  h+=`<div class="card"><h3>WHAT DID HE BOOK? 🕵️‍♀️</h3>${hintBlock('soloSpa',H.soloSpa)}${textQ('soloSpaAns','מה מחכה לך עכשיו?',['עיסוי ראש','מסאז ראש','מסאז׳ ראש','טיפול ראש','עיסוי קצוות','ראש וקצוות','עיסוי ראש וקצוות','head massage'],'🔓 SOLO SURPRISE UNLOCKED — טיפול ראש וקצוות 💆‍♀️',20)}</div>`;
  if(S.done.soloSpaAns){
    h+=`<div class="card center"><h2>JUST FOR AMIT ❤️</h2><p>🕐 ${S.settings.soloSpaTime}<br>${S.settings.soloSpaDuration!=='TBD'?`⏱️ ${S.settings.soloSpaDuration}`:''}</p><p>חפרת על זה מספיק זמן. הגיע הזמן.</p><button onclick="pauseSoloSpa()">I'M GOING IN 💆‍♀️</button></div>`;
@@ -266,7 +274,7 @@ function renderLevel(i){
    h+=textQ('d2','מה לדעתך יהיה הדבר הראשון שנתאי יזמין?',['*'],'🔮 PREDICTION SAVED.',0,'ניחוש חופשי...');
    if(S.done.d1&&S.done.d2)h+=`<div class="card center"><button onclick="pauseDinner()">PAUSE GAME 🍽️</button></div>`;
  } else {
-   h=`<div class="hero"><div class="gold">LEVEL 8</div><h2>WELCOME BACK.</h2><p>DAY PROGRESS: 87%</p><h1>CUTE.</h1></div>`;
+   h=`<div class="hero"><div class="gold">LEVEL 8</div><h2>WELCOME BACK.</h2><p>DAY PROGRESS: 87%</p><h1>CUTE.</h1></div>`; if(S.wish)h+=`<div class="card center"><h3>✨ REMEMBER THIS?</h3><p>מוקדם יותר היום ביקשתי ממך משאלה אחת לשנה הקרובה.</p><div class="wish-quote">״${S.wish}״</div><p>אני לא יודע אם אני יכול להגשים לך כל משאלה.<br>אבל אני כן מבטיח להיות לידך בדרך אליה. ❤️</p></div>`;
    h+=textQ('cp1','מה הייתה התחנה הראשונה של היום?',['רבנות','הרבנות'],'✅ CHECKPOINT');
    h+=textQ('cp2','איזה מספר הופיע ליד ROOM KEY?',['2'],'✅ CHECKPOINT');
    h+=textQ('cp3','מה היה THE 1:43 INCIDENT?',['ברכה','איחור','איחור בברכה'],'✅ CHECKPOINT');
@@ -288,7 +296,7 @@ function renderLevel(i){
 }
 function pauseDinner(){screenEl.innerHTML=`<div class="pause"><h1>🍽️ DINNER MODE</h1><p class="sub">אין שאלות. אין רמזים. שימי את הטלפון בצד ותיהני מהערב. ❤️</p><button onclick="returnFromDinner()">DINNER COMPLETE ✓</button></div>`}
 function returnFromDinner(){S.done.dinnerReturned=true;S.substage='postDinner';save();renderLevel(8)}
-function showEnding(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero final"><div class="gold">GAME COMPLETE ❤️</div><h1>100%</h1><p>עוד יום הולדת אחד שעברנו יחד.</p><p>היו לנו כבר ימי הולדת עם אפטר, ברכה שאיחרה בשעה ו־43 דקות, יקב, סוסים, כרמים ושמלות שהחליטו להישאר בבית.</p><p>אבל השנה הזאת קצת אחרת — כי זה יום ההולדת האחרון שלך לפני שאנחנו מתחתנים.</p><p>מחוף 4×4 בראשון, דרך הנשיקה הראשונה בסיני, ועד ההפתעה בפאפוס — עברנו דרך די ארוכה.</p><h2>והחלק שאני הכי מחכה לו עדיין לפנינו.</h2><h2>יום הולדת שמח, מאמי ❤️</h2><div class="card"><div class="small">NEW LEVEL DETECTED...</div><h1 class="gold">08.10.2026 💍</h1><p>COHEN × COHEN</p><b>COMING SOON.</b></div><p class="small">SEASON 4 — COMPLETE.</p></div>`}
+function showEnding(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero final"><div class="gold">GAME COMPLETE ❤️</div><h1>100%</h1><p>עוד יום הולדת אחד שעברנו יחד.</p><p>היו לנו כבר ימי הולדת עם אפטר, ברכה שאיחרה בשעה ו־43 דקות, יקב, סוסים, כרמים ושמלות שהחליטו להישאר בבית.</p><p>אבל השנה הזאת קצת אחרת — כי זה יום ההולדת האחרון שלך לפני שאנחנו מתחתנים.</p><p>מחוף 4×4 בראשון, דרך הנשיקה הראשונה בסיני, ועד ההפתעה בפאפוס — עברנו דרך די ארוכה.</p><h2>והחלק שאני הכי מחכה לו עדיין לפנינו.</h2><h2>יום הולדת שמח, מאמי ❤️</h2>${S.wish?`<div class="card"><div class="small">YOUR WISH FOR 24</div><div class="wish-quote">״${S.wish}״</div><p>שמרי אותה. נחזור אליה בגיל 25. ❤️</p></div>`:''}<div class="card"><div class="small">NEW LEVEL DETECTED...</div><h1 class="gold">08.10.2026 💍</h1><p>COHEN × COHEN</p><b>COMING SOON.</b></div><p class="small">SEASON 4 — COMPLETE.</p></div>`}
 $('gmBtn').onclick=()=>{if(prompt('Game Master code')==='2418')openGM();else toast('ACCESS DENIED')}
 function openGM(){
  $('gmPanel').classList.remove('hidden');
@@ -302,7 +310,7 @@ function openGM(){
 function closeGM(){$('gmPanel').classList.add('hidden')}
 function saveGMSettings(){S.disaster=+$('gmDisaster').value;S.score=+$('gmScore').value;S.settings.soloSpaTime=$('gmSoloSpaTime').value||'13:00';S.settings.soloSpaDuration=$('gmSoloSpaDuration').value||'TBD';S.settings.coupleSpaTime=$('gmCoupleSpaTime').value||'17:00';S.settings.coupleSpaDuration=$('gmCoupleSpaDuration').value||'TBD';S.settings.room=$('gmRoom').value||'TBD';S.settings.roomObs=$('gmRoomObs').value||'TBD';S.settings.safe=$('gmSafe').value||'2584';save();toast('Settings saved');openGM()}
 function forceLevel(){let n=+$('gmLevel').value;if(!S.unlocked.includes(n))S.unlocked.push(n);S.level=n;S.substage='main';save();closeGM();renderLevel(n)}
-function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV5');location.reload()}}
+function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV6');location.reload()}}
 if(S.started)renderHome();else renderStart();
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
 </script>
