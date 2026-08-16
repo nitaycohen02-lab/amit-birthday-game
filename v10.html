@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- AMIT GAME V10.1 COUNTDOWN FIX -->
+<!-- AMIT GAME V10 LEVEL 5 FIX -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -86,7 +86,7 @@ button{
 <body>
 <div class="app">
   <div class="top hidden" id="topbar">
-    <div class="brand">AMIT'S BIRTHDAY GAME • SEASON 4 <span style="opacity:.35">V10.1</span></div>
+    <div class="brand">AMIT'S BIRTHDAY GAME • SEASON 4 <span style="opacity:.35">V10</span></div>
     <div class="stats"><span class="pill">🏆 <b id="score">0</b></span><span class="pill">❤️❤️❤️</span><span class="pill">🚨 <b id="disaster">0%</b></span><span class="pill">LVL <b id="lvl">0</b></span></div>
     <div class="meter"><div id="progressBar"></div></div>
   </div>
@@ -154,12 +154,12 @@ button{
 <script>
 const LEVELS=['הלילה שלפני — משימת האריזה','בוקר יום ההולדת','הרבנות','קפה מארי','בדרך לתל אביב','הפתעת הסולו','הארכיון הסודי','מתארגנים לערב','קומראן','השלב האחרון'];
 const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},answers:{},hints:{},wish:'',life24:'',sound:true,settings:{soloSpaTime:'13:00',soloSpaDuration:'TBD',coupleSpaTime:'17:00',coupleSpaDuration:'TBD',safe:'2584',blessing:'',songs:{rabbinate:{name:'',url:''},marie:{name:'Espresso — Sabrina Carpenter',url:''},hotel:{name:'',url:''},qumran:{name:'Die With A Smile — Lady Gaga & Bruno Mars',url:''}}}};
-let S; try{S=JSON.parse(localStorage.getItem('amitGameV101'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+let S; try{S=JSON.parse(localStorage.getItem('amitGameV10'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
 S.answers=S.answers||{}; if(typeof S.sound!=='boolean')S.sound=true; S.settings=S.settings||{};
 S.settings.songs=S.settings.songs||JSON.parse(JSON.stringify(DEF.settings.songs));
 for(const k of Object.keys(DEF.settings))if(S.settings[k]===undefined)S.settings[k]=JSON.parse(JSON.stringify(DEF.settings[k]));
 const $=id=>document.getElementById(id), screenEl=$('screen');
-function save(){localStorage.setItem('amitGameV101',JSON.stringify(S));topUI()}
+function save(){localStorage.setItem('amitGameV10',JSON.stringify(S));topUI()}
 function topUI(){$('score').textContent=S.score;$('disaster').textContent=S.disaster+'%';$('lvl').textContent=S.level;$('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
 function toast(t){let x=$('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1700)}
 function add(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
@@ -237,6 +237,7 @@ function checkText(key,answers,success,points){
     if(key==='soloSpaAns')setTimeout(showSoloHeadMassagePopup,350);
     const songTrips={rabbinateAns:['rabbinate','לרבנות'],marieAns:['marie','לקפה מארי'],hotelAns:['hotel','למלון'],qumAns:['qumran','לקומראן']};
     if(songTrips[key])setTimeout(()=>showSongPopup(songTrips[key][0],songTrips[key][1]),500);
+    if(key==='qumAns')setTimeout(showDepartureCountdown,900);
     if(['l1','l2','l3','l4'].includes(key))setTimeout(()=>renderLevel(9),220);
     if(['d1','d2'].includes(key)&&S.done.d1&&S.done.d2)setTimeout(showPhoneDownPopup,350);
     refreshApprovalGate();
@@ -276,14 +277,11 @@ function showSongPopup(key,title){
   S.done['songPopup_'+key]=true;save();sfx('unlock');
   const name=x.name||'השיר של הנסיעה';
   const action=x.url?`<button onclick="openSong('${key}')">▶️ הפעילי את השיר</button>`:`<p class="sub">השיר עדיין לא הוגדר במנהל המשחק ⚙️</p>`;
-  const after=(key==='qumran')?'showDepartureCountdown':'';
-  showOverlay('🚗🎵 שיר לדרך — '+title,`<p>לפני שממשיכים ליעד הבא:</p><h3>${name}</h3>${action}`,'ממשיכים לדרך ❤️',after);
+  showOverlay('🚗🎵 שיר לדרך — '+title,`<p>לפני שממשיכים ליעד הבא:</p><h3>${name}</h3>${action}`,'ממשיכים לדרך ❤️');
 }
 function showDepartureCountdown(){
-  if($('dynamicModal')){setTimeout(showDepartureCountdown,250);return;}
-  if(S.done.departureCountdownShown)return;
-  S.done.departureCountdownShown=true;save();sfx('unlock');
-  showOverlay('⏰ זמן להתארגן — יוצאים ב־21:00',`<p>היעד לערב נחשף. עכשיו מתחילה הספירה לאחור.</p><div class="timer-big" id="leaveCountdown">--:--:--</div><p class="sub">עד שצריך לצאת לקומראן 🚗</p>`,'הבנתי — מתחילה להתארגן ✨');
+  if($('dynamicModal'))return;
+  showOverlay('⏰ יוצאים ב־21:00',`<p>היעד לערב נחשף. עכשיו נשאר להתארגן בזמן.</p><div class="timer-big" id="leaveCountdown">--:--:--</div><p class="sub">ספירה לאחור עד היציאה לקומראן</p>`,'הבנתי — מתחילה להתארגן ✨');
   const tick=()=>{const e=$('leaveCountdown');if(!e)return;const n=new Date(),t=new Date(n);t.setHours(21,0,0,0);if(n>t)t.setDate(t.getDate()+1);let d=Math.max(0,t-n),h=Math.floor(d/3600000),m=Math.floor(d%3600000/60000),sec=Math.floor(d%60000/1000);e.textContent=[h,m,sec].map(x=>String(x).padStart(2,'0')).join(':');};tick();window.leaveCountdownTimer=setInterval(tick,1000);
 }
 
@@ -508,12 +506,7 @@ function renderLevel(i){
  h+=mcq('g3','WHITE SUIT BOSS FIGHT — נתאי רוצה חליפה לבנה. מה עמית עושה?',[{t:'מכבדת את הבחירה',ok:false,msg:'❌'},{t:'מסבירה בעדינות',ok:false,msg:'עדין מדי.'},{t:'מבטלת חתונה',ok:false,msg:'קיצוני.'},{t:'אני מרגישה שאנחנו קצת כועסים',ok:true,msg:'💥 CRITICAL HIT. נתאי הפעיל: ✨ תודעת שפע ✨'}]);
  h+=textQ('g4','אם יש נר אחד לכל 6 שנות חיים, כמה נרות על העוגה?',['4','ארבע'],'✅ 4.');
  h+=`<div class="card center"><span class="memory-chip">CODE: 04</span><h3>SCANNING...</h3><p>OUTFIT ✓ • SHOES ✓ • PHONE ✓</p></div>`;
- h+=`<div class="card"><h3>🍽️ FIND TONIGHT'S DESTINATION</h3>${hintBlock('qumran',H.qumran)}${textQ('qumAns','איפה אוכלים הערב?',['קומראן','קומרן','qumran'],'🍽️ קומראן — 21:30',20)}</div>`;
- if(S.done.qumAns){
-   h+=songCard('qumran','לקומראן');
-   h+=`<div class="card center"><h3>⏰ יוצאים ב־21:00</h3><p>הספירה לאחור להתארגנות נפתחת מיד אחרי חלון השיר.</p><button class="secondary" onclick="S.done.departureCountdownShown=false;save();showDepartureCountdown()">פתחי שוב את הספירה לאחור</button></div>`;
- }
- h+=nextBtn(7);
+ h+=`<div class="card"><h3>🍽️ FIND TONIGHT'S DESTINATION</h3>${hintBlock('qumran',H.qumran)}${textQ('qumAns','איפה אוכלים הערב?',['קומראן','קומרן','qumran'],'🍽️ קומראן — 21:30',20)}</div>`; if(S.done.qumAns)h+=songCard('qumran','לקומראן'); h+=nextBtn(7);
  }
  if(i===8){
  if(S.substage!=='postDinner'){
@@ -631,7 +624,7 @@ function masterBypassNext(){
   renderLevel(i+1);
 }
 function forceLevel(){let n=+$('gmLevel').value;if(!S.unlocked.includes(n))S.unlocked.push(n);S.level=n;S.substage='main';save();closeGM();renderLevel(n)}
-function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV101');location.reload()}}
+function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV10');location.reload()}}
 if(S.started && Number(S.level)===0){renderLevel(0)}else if(S.started){renderHome()}else{renderStart()}
 </script>
 
@@ -640,7 +633,7 @@ if(S.started && Number(S.level)===0){renderLevel(0)}else if(S.started){renderHom
 
 <script>
 (function(){
-  const VERSION='v10.1-countdownfix';
+  const VERSION='v10-level5fix';
   try{
     const seen=localStorage.getItem('amit_release_version');
     if(seen!==VERSION){
