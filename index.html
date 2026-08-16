@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>AMIT'S BIRTHDAY GAME</title>
+  <title>AMIT'S BIRTHDAY GAME — V5</title>
+<!-- V5 FINAL FLOW -->
   <meta name="description" content="Amit's Birthday Game — Season 4">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -41,6 +42,7 @@
     .gm-status{padding:12px;border:1px dashed #444;border-radius:14px;margin:12px 0;line-height:1.55}
     @media(max-width:380px){.inline{flex-direction:column}.inline button{width:100%}}
 </style>
+<!-- V5 FINAL SCHEDULE: 13:00 SOLO HEAD/ENDS + 17:00 COUPLES SWEDISH -->
 </head>
 <body>
 <div class="app">
@@ -58,8 +60,12 @@
   <div class="card">
     <label>Disaster Meter</label><input type="number" min="0" max="100" id="gmDisaster"/>
     <label>נקודות</label><input type="number" id="gmScore"/>
-    <label>שעת ספא</label><input id="gmSpaTime" placeholder="למשל 16:00"/>
-    <label>משך ספא</label><input id="gmSpaDuration" placeholder="למשל 60 דקות"/>
+    <label>טיפול ראש וקצוות — עמית לבד</label>
+    <input id="gmSoloSpaTime" placeholder="13:00"/>
+    <label>משך טיפול ראש</label><input id="gmSoloSpaDuration" placeholder="אם ידוע"/>
+    <label>עיסוי שוודי זוגי</label>
+    <input id="gmCoupleSpaTime" placeholder="17:00"/>
+    <label>משך עיסוי זוגי</label><input id="gmCoupleSpaDuration" placeholder="אם ידוע"/>
     <label>מספר חדר</label><input id="gmRoom" placeholder="למשל 824"/>
     <label>Observation בחדר</label><input id="gmRoomObs" placeholder="למשל 4 כריות"/>
     <label>קוד כספת</label><input id="gmSafe" maxlength="4" placeholder="2584"/>
@@ -91,11 +97,11 @@
 </div>
 
 <script>
-const LEVELS=['PACKING MISSION','BIRTHDAY MORNING','THE RABBINATE','CAFE MARIE','ROAD TO TEL AVIV','HOTEL MODE','BIRTHDAY ARCHIVES','GET READY','QUMRAN','FINAL BOSS'];
-const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},hints:{},settings:{spaTime:'TBD',spaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584'}};
-let S; try{S=JSON.parse(localStorage.getItem('amitGameV4'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+const LEVELS=['PACKING MISSION','BIRTHDAY MORNING','THE RABBINATE','CAFE MARIE','ROAD TO TEL AVIV','SOLO SURPRISE','BIRTHDAY ARCHIVES + COUPLES SPA','GET READY','QUMRAN','FINAL BOSS'];
+const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},hints:{},settings:{soloSpaTime:'13:00',soloSpaDuration:'TBD',coupleSpaTime:'17:00',coupleSpaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584'}};
+let S; try{S=JSON.parse(localStorage.getItem('amitGameV5'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
 const $=id=>document.getElementById(id), screenEl=$('screen');
-function save(){localStorage.setItem('amitGameV4',JSON.stringify(S));topUI()}
+function save(){localStorage.setItem('amitGameV5',JSON.stringify(S));topUI()}
 function topUI(){$('score').textContent=S.score;$('disaster').textContent=S.disaster+'%';$('lvl').textContent=S.level;$('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
 function toast(t){let x=$('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1700)}
 function add(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
@@ -110,7 +116,18 @@ const H={
  marie:['☕ במקום הבא לא חותמים על שום דבר.','📍 חוזרים לעיר שבה הכול התחיל, למרות שהתעקשנו שלא.','👩🏻 השם שאת מחפשת הוא שם של אישה.','☕ MAR_ _'],
  ta:['🌊 אנחנו מתקרבים לים.','🚗 ים, פקקים, ו־₪50 לקפה נשמע פתאום סביר.'],
  hotel:['👑 משהו מלכותי בשם.','🌊 החלק השני של השם נמצא ממש מולך כשעומדים על החוף.','🇬🇧 שתי מילים באנגלית: מלך + המקום שבו הים פוגש יבשה.'],
- spa:['בשעה הקרובה העבודה הכי קשה שלך תהיה לא לעשות כלום.','💆‍♀️ מישהו אחר יעבוד. את תשכבי.','🎒 יש סיבה שביקשנו בגד ים.'],
+ soloSpa:[
+   '🧠 יש משהו שאת חופרת עליו כבר הרבה זמן.',
+   '🙋‍♀️ הפעם את נכנסת לבד. נתאי לא מוזמן למשימה הזאת.',
+   '💆‍♀️ הראש שלך עומד להודות לי.',
+   '✨ זה מתחיל בראש ומגיע גם לקצוות.'
+ ],
+ coupleSpa:[
+   '👥 בניגוד להפתעה הקודמת — הפעם את לא נכנסת לבד.',
+   '🇸🇪 יש לזה קשר למדינה סקנדינבית.',
+   '💆‍♂️💆‍♀️ שני אנשים. שני טיפולים. חדר אחד.',
+   '❤️ הפעם נתאי מצטרף.'
+ ],
  qumran:['📅 המקום הבא כבר כמעט היה חלק מהסיפור שלנו פעם אחת.','❤️ היינו אמורים להיות שם בט״ו באב… אבל ביטלו לנו.','📜 השם שלו נשמע כאילו הוא שייך למגילות עתיקות.','🏺 מגילות. מערות. ים המלח.'],
  safe:['🏨 את לא צריכה לצאת מהחדר.','🔒 המקום נועד לשמור על דברים שלא משאירים סתם בחוץ.','🔢 הוא אוהב מספרים יותר ממפתחות.']
 };
@@ -125,8 +142,8 @@ const REQUIRED={
   2:['r1','r2','marieAns'],
   3:['c1','table10','c2','c3','c4','taAns'],
   4:['t1','road24','t2','hotelAns'],
-  5:['h1','h2','hotel24','spaAns','spaReturned'],
-  6:['a1','a2','a3','a4','a5','a6'],
+  5:['soloSpaAns','soloSpaReturned'],
+  6:['h1','h2','a1','a2','a3','a4','a5','a6','coupleSpaAns','coupleSpaReturned'],
   7:['ready24','g1','g2','g3','g4','qumAns'],
   8:['d1','d2','dinnerReturned','cp1','cp2','cp3']
 };
@@ -151,8 +168,14 @@ function approveNextLevel(){
 function renderStart(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><div style="font-size:28px">🎈🎈🎈🎈🎈🎈🎈🎈</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
 function start(){S.started=true;save();renderHome()}
 function renderHome(){$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');topUI();screenEl.innerHTML=`<div class="card"><div class="small">CURRENT MISSION</div><h2>${LEVELS[S.level]}</h2><button onclick="renderLevel(${S.level})">CONTINUE</button></div><div class="card"><h3>🚨 BIRTHDAY DISASTER METER™</h3><p>${S.disaster<20?'🟢 EVERYTHING SUSPICIOUSLY FINE':S.disaster<50?'🟠 WE MAY HAVE AN INCIDENT':'🔴 THIS IS NOW A STORY'}</p></div>${LEVELS.map((x,i)=>`<div class="route-item ${S.unlocked.includes(i)?'':'locked'}">${S.unlocked.includes(i)?(i===S.level?'▶':'✓'):'🔒'} ${S.unlocked.includes(i)?x:'CLASSIFIED'}</div>`).join('')}`}
-function pauseSpa(){screenEl.innerHTML=`<div class="pause"><h1>GAME PAUSED</h1><p class="sub">לכי ליהנות מהספא. הטלפון יכול לחכות. ❤️</p><button onclick="returnFromSpa()">I'M BACK</button></div>`}
-function returnFromSpa(){S.done.spaReturned=true;save();renderLevel(5)}
+function pauseSoloSpa(){
+ screenEl.innerHTML=`<div class="pause"><h1>SOLO MISSION 💆‍♀️</h1><p class="sub">הטלפון נשאר בצד.<br>לכי ליהנות מטיפול הראש והקצוות שלך. ❤️</p><p class="small">Game Master is currently busy with classified activity.</p><button onclick="returnFromSoloSpa()">I'M BACK</button></div>`
+}
+function returnFromSoloSpa(){S.done.soloSpaReturned=true;save();renderLevel(5)}
+function pauseCoupleSpa(){
+ screenEl.innerHTML=`<div class="pause"><h1>COUPLES SPA MODE ❤️</h1><p class="sub">עכשיו שניכם מניחים את הטלפונים בצד.<br>עיסוי שוודי זוגי. תיהנו.</p><button onclick="returnFromCoupleSpa()">WE'RE BACK</button></div>`
+}
+function returnFromCoupleSpa(){S.done.coupleSpaReturned=true;save();renderLevel(6)}
 
 function renderLevel(i){
  if(Number.isInteger(i)){S.level=i;save()}$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');let h=`<div class="hero"><div class="gold">LEVEL ${S.level}</div><h2>${LEVELS[S.level]}</h2></div>`;
@@ -191,20 +214,24 @@ function renderLevel(i){
  h+=textQ('t1','אם כל שנה בחיים של עמית הייתה דקה, כמה זמן היו כל החיים שלה?',['24','24 דקות'],'✅ 24 דקות.');
  h+=`<div class="card"><h3>24 SECOND CHALLENGE ⏱️</h3><button onclick="timer(this,24,'road24')">START 24 SEC</button></div>`;
  h+=textQ('t2','איזה מספר הופיע ליד ROOM KEY בארוחת הבוקר?',['2','שתיים'],'✅ SHE NOTICED 😳',15)+`<div class="card"><button class="secondary" onclick="replay('roomkey')">REPLAY MEMORY —5</button></div>`;
- h+=`<div class="card"><h3>WHERE ARE WE SLEEPING TONIGHT? 👑🌊</h3>${hintBlock('hotel',H.hotel)}${textQ('hotelAns','שם המלון:',['royal beach','רויאל ביץ','רויאל ביץ׳'],'🔓 ROYAL BEACH TEL AVIV — CHECK-IN 14:00',20)}</div>`;
+ h+=`<div class="card"><h3>WHERE ARE WE SLEEPING TONIGHT? 👑🌊</h3>${hintBlock('hotel',H.hotel)}${textQ('hotelAns','שם המלון:',['royal beach','רויאל ביץ','רויאל ביץ׳'],'🔓 ROYAL BEACH TEL AVIV — ARRIVAL 13:00',20)}</div>`;
  h+=`<div class="card center"><h3>🏆 HOTEL HUNTER</h3><span class="memory-chip">EST. 2002</span></div>`+nextBtn(4);
  }
  if(i===5){
- h+=textQ('h1','מה מספר החדר שלנו?',[S.settings.room],'✅ BASIC SURVIVAL SKILLS CONFIRMED.');
- h+=textQ('h2','Observation Challenge בחדר — מה התשובה שה־Game Master הגדיר?',[S.settings.roomObs],'✅ HOTEL DETECTIVE',15,'תשובה לפי מה שראית...');
- h+=`<div class="card"><h3>24 SECOND CHALLENGE</h3><p>יש לך 24 שניות להביא משהו בצבע בז׳.</p><button onclick="timer(this,24,'hotel24')">START</button></div>`;
- h+=`<div class="card"><span class="memory-chip">PROTOCOL: 04</span><h3>WHAT'S NEXT? 🧖‍♀️</h3>${hintBlock('spa',H.spa)}${textQ('spaAns','מה הפעילות הבאה?',['ספא','spa','מסאז','מסאז׳','massage'],'🧖‍♀️ SPA UNLOCKED',15)}<p>🕐 ${S.settings.spaTime}<br>⏱️ ${S.settings.spaDuration}</p></div>`;
- if(S.done.h1&&S.done.h2&&S.done.hotel24&&S.done.spaAns){
-   h+=`<div class="card center"><button onclick="pauseSpa()">PAUSE — I'M GOING TO THE SPA</button></div>`;
+ h+=`<div class="card"><h3>13:00 — FIRST HOTEL SURPRISE</h3><p>הגעת ל־Royal Beach. אבל לפני חדר, מנוחה או שאלות מיותרות — יש משימה אחת.</p><p class="sub">הפעם נתאי לא מצטרף אלייך.</p></div>`;
+ h+=`<div class="card"><h3>WHAT DID HE BOOK? 🕵️‍♀️</h3>${hintBlock('soloSpa',H.soloSpa)}${textQ('soloSpaAns','מה מחכה לך עכשיו?',['עיסוי ראש','מסאז ראש','מסאז׳ ראש','טיפול ראש','עיסוי קצוות','ראש וקצוות','עיסוי ראש וקצוות','head massage'],'🔓 SOLO SURPRISE UNLOCKED — טיפול ראש וקצוות 💆‍♀️',20)}</div>`;
+ if(S.done.soloSpaAns){
+   h+=`<div class="card center"><h2>JUST FOR AMIT ❤️</h2><p>🕐 ${S.settings.soloSpaTime}<br>${S.settings.soloSpaDuration!=='TBD'?`⏱️ ${S.settings.soloSpaDuration}`:''}</p><p>חפרת על זה מספיק זמן. הגיע הזמן.</p><button onclick="pauseSoloSpa()">I'M GOING IN 💆‍♀️</button></div>`;
  }
- h+=nextBtn(5);
+ if(S.done.soloSpaReturned){
+   h+=`<div class="card center"><h3>WELCOME BACK ✨</h3><p>ראש: רגוע ✅<br>קצוות: טופלו ✅<br>מה קרה בחדר בזמן הזה: CLASSIFIED 🔒</p></div>`;
+ }
+ h+=nextBtn(5,'FIRST SURPRISE STATUS');
  }
  if(i===6){
+ h+=`<div class="card"><h3>ROOM UPDATED 🏨✨</h3><p>בזמן שהיית במשימה הסודית שלך, משהו בחדר השתנה.</p><p class="sub">מומלץ להסתכל מסביב. המשחק זוכר דברים שאת לא בהכרח זוכרת.</p></div>`;
+ h+=textQ('h1','מה מספר החדר שלנו?',[S.settings.room],'✅ BASIC SURVIVAL SKILLS CONFIRMED.');
+ h+=textQ('h2','Observation Challenge בחדר — מה התשובה שה־Game Master הגדיר?',[S.settings.roomObs],'✅ HOTEL DETECTIVE',15,'תשובה לפי מה שראית...');
  h+=`<div class="card"><h3>🗃️ BIRTHDAY ARCHIVES UNLOCKED</h3><p>2023 • 2024 • 2025</p></div>`;
  h+=mcq('a1','2023 — מי ארגן לעמית את החגיגה בפטריקס?',[{t:'עמית',ok:true,msg:'✅ FILE DECLASSIFIED.'},{t:'נתאי',ok:false,msg:'❌'},{t:'החברות',ok:false,msg:'❌'},{t:'Tomorrowland',ok:false,msg:'שאפתני.'}]);
  h+=textQ('a2','2023 — מה חיכה לנתאי בבוקר שאחרי?',['קריית שמונה','אוטובוסים לקריית שמונה'],'✅ אוטובוסים לקריית שמונה.');
@@ -212,7 +239,15 @@ function renderLevel(i){
  h+=textQ('a4','2024 — איפה היה החשוד?',['כותל','הכותל'],'✅ REDEMPTION: יקב + סוסים.');
  h+=textQ('a5','2025 — מה קרה אחרי שגילינו שהשמלות נשארו בבית?',['חזרנו','חזרנו להביא','חזרנו להביא את השמלות'],'👗 NEVER FORGET.');
  h+=textQ('a6','כמה ימי הולדת היו לעמית לפני יום ההולדת הנוכחי?',['23'],'✅ 23. הנוכחי עדיין בחקירה.');
- h+=`<div class="card center"><h3>ARCHIVE VERIFIED</h3><span class="memory-chip">FILE 05</span></div>`+nextBtn(6,'FREE TIME MODE 🛋️');
+ h+=`<div class="card center"><h3>ARCHIVE VERIFIED</h3><span class="memory-chip">FILE 05</span></div>`;
+ h+=`<div class="card"><h3>17:00 — SECOND SPA TRANSMISSION 💆‍♂️💆‍♀️</h3><p>חשבת שטיפול אחד סגר את פינת הספא להיום?</p>${hintBlock('coupleSpa',H.coupleSpa)}${textQ('coupleSpaAns','מה מחכה לנו בשעה 17:00?',['עיסוי שוודי','מסאז שוודי','מסאז׳ שוודי','עיסוי זוגי','מסאז זוגי','מסאז׳ זוגי','עיסוי שוודי זוגי','swedish massage'],'🔓 COUPLES SPA UNLOCKED — עיסוי שוודי זוגי ❤️',20)}</div>`;
+ if(S.done.coupleSpaAns){
+   h+=`<div class="card center"><h2>THIS TIME: BOTH OF YOU ❤️</h2><p>🕔 ${S.settings.coupleSpaTime}<br>${S.settings.coupleSpaDuration!=='TBD'?`⏱️ ${S.settings.coupleSpaDuration}`:''}</p><button onclick="pauseCoupleSpa()">WE'RE GOING TO THE SPA</button></div>`;
+ }
+ if(S.done.coupleSpaReturned){
+   h+=`<div class="card center"><h3>COUPLES SPA COMPLETE ✅</h3><p>עכשיו באמת אפשר להתחיל לחשוב על הערב.</p></div>`;
+ }
+ h+=nextBtn(6,'AFTERNOON STATUS');
  }
  if(i===7){
  h+=`<div class="card"><h3>OPERATION: GET HOT</h3><p>DEADLINE: 20:45 • DESTINATION: CLASSIFIED</p></div>`;
@@ -257,7 +292,7 @@ function showEnding(){$('topbar').classList.add('hidden');$('gmBtn').classList.a
 $('gmBtn').onclick=()=>{if(prompt('Game Master code')==='2418')openGM();else toast('ACCESS DENIED')}
 function openGM(){
  $('gmPanel').classList.remove('hidden');
- $('gmDisaster').value=S.disaster;$('gmScore').value=S.score;$('gmSpaTime').value=S.settings.spaTime;$('gmSpaDuration').value=S.settings.spaDuration;$('gmRoom').value=S.settings.room;$('gmRoomObs').value=S.settings.roomObs;$('gmSafe').value=S.settings.safe;
+ $('gmDisaster').value=S.disaster;$('gmScore').value=S.score;$('gmSoloSpaTime').value=S.settings.soloSpaTime;$('gmSoloSpaDuration').value=S.settings.soloSpaDuration;$('gmCoupleSpaTime').value=S.settings.coupleSpaTime;$('gmCoupleSpaDuration').value=S.settings.coupleSpaDuration;$('gmRoom').value=S.settings.room;$('gmRoomObs').value=S.settings.roomObs;$('gmSafe').value=S.settings.safe;
  $('gmLevel').innerHTML=LEVELS.map((x,i)=>`<option value="${i}">${i} — ${x}</option>`).join('');
  $('gmLevel').value=Math.min(9,Math.floor(S.level));
  let [done,total]=completionCount(S.level);
@@ -265,9 +300,9 @@ function openGM(){
  $('gmApproveBtn').disabled=!levelReady(S.level)||S.level>=9;
 }
 function closeGM(){$('gmPanel').classList.add('hidden')}
-function saveGMSettings(){S.disaster=+$('gmDisaster').value;S.score=+$('gmScore').value;S.settings.spaTime=$('gmSpaTime').value||'TBD';S.settings.spaDuration=$('gmSpaDuration').value||'TBD';S.settings.room=$('gmRoom').value||'TBD';S.settings.roomObs=$('gmRoomObs').value||'TBD';S.settings.safe=$('gmSafe').value||'2584';save();toast('Settings saved');openGM()}
+function saveGMSettings(){S.disaster=+$('gmDisaster').value;S.score=+$('gmScore').value;S.settings.soloSpaTime=$('gmSoloSpaTime').value||'13:00';S.settings.soloSpaDuration=$('gmSoloSpaDuration').value||'TBD';S.settings.coupleSpaTime=$('gmCoupleSpaTime').value||'17:00';S.settings.coupleSpaDuration=$('gmCoupleSpaDuration').value||'TBD';S.settings.room=$('gmRoom').value||'TBD';S.settings.roomObs=$('gmRoomObs').value||'TBD';S.settings.safe=$('gmSafe').value||'2584';save();toast('Settings saved');openGM()}
 function forceLevel(){let n=+$('gmLevel').value;if(!S.unlocked.includes(n))S.unlocked.push(n);S.level=n;S.substage='main';save();closeGM();renderLevel(n)}
-function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV4');location.reload()}}
+function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV5');location.reload()}}
 if(S.started)renderHome();else renderStart();
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
 </script>
