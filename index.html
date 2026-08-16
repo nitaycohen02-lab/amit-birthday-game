@@ -129,7 +129,7 @@
 </div>
 
 <script>
-const LEVELS=['PACKING MISSION','BIRTHDAY MORNING','THE RABBINATE','CAFE MARIE','ROAD TO TEL AVIV','SOLO SURPRISE','BIRTHDAY ARCHIVES + COUPLES SPA','GET READY','QUMRAN','FINAL BOSS'];
+const LEVELS=['הלילה שלפני — משימת האריזה','בוקר יום ההולדת','הרבנות','קפה מארי','בדרך לתל אביב','הפתעת הסולו','ארכיון ימי ההולדת + ספא זוגי','GET READY','קומראן','השלב האחרון'];
 const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},answers:{},hints:{},wish:'',life24:'',sound:true,settings:{soloSpaTime:'13:00',soloSpaDuration:'TBD',coupleSpaTime:'17:00',coupleSpaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584',blessing:'',songs:{rabbinate:{name:'',url:''},marie:{name:'',url:''},hotel:{name:'',url:''},qumran:{name:'',url:''}}}};
 let S; try{S=JSON.parse(localStorage.getItem('amitGameV8'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
 S.answers=S.answers||{}; if(typeof S.sound!=='boolean')S.sound=true; S.settings=S.settings||{};
@@ -302,6 +302,7 @@ function returnFromCoupleSpa(){S.done.coupleSpaReturned=true;save();renderLevel(
 function renderLevel(i){
  if(Number.isInteger(i)){S.level=i;save()}$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');$('soundBtn').classList.remove('hidden');$('soundBtn').textContent=S.sound?'🔊':'🔇';let h=`<div class="hero"><div class="gold">LEVEL ${S.level}</div><h2>${LEVELS[S.level]}</h2></div>`;
  if(i===0){
+ h+=`<div class="card center"><div class="gold">🌙 הלילה שלפני יום ההולדת</div><h2>המשחק מתחיל כבר עכשיו</h2><p>עוד לא מגלים לאן נוסעים מחר. כרגע יש לך רק משימה אחת: לארוז לפי ההוראות ולסמוך עליי ❤️</p><p class="sub">מחר בבוקר ייפתח השלב הבא והיעד הראשון ייחשף.</p></div>`;
  h+=`<div class="card"><p>מחר מתחיל המשחק. את לא יודעת לאן. את לא יודעת מה עושים. והטעות הראשונה שלך הייתה לתת לנתאי לתכנן הכול.</p><h3>MISSION: PACK YOUR SH*T 🎒</h3></div>`;
  h+=mcq('p1','מחר מישהו זר כנראה ייגע בך במשך כמעט שעה. מה כדאי שיהיה בתיק?',[{t:'צו הרחקה',ok:false,msg:'❌ ניסיון יפה.'},{t:'בגד ים',ok:true,msg:'✅ ITEM UNLOCKED: בגד ים.'},{t:'אפוד קרמי',ok:false,msg:'❌ זה לא מילואים.'},{t:'נתאי',ok:false,msg:'❌ הוא כבר מגיע בחבילה.'}]);
  h+=textQ('p2','בערב תצטרכי להיראות כאילו נתאי השקיע ביום הזה הרבה יותר ממה שהוא באמת השקיע. מה נכנס לתיק?',['שמלה','בגדי ערב','אאוטפיט','outfit'],'✅ EVENING MODE UNLOCKED 👗');
@@ -310,6 +311,7 @@ function renderLevel(i){
  h+=`<div class="card"><h3>PACKING LIST UNLOCKED 🔓</h3><p>בגד ים • בגדי ערב • בגדים למחר • פיג׳מה • תחתונים/גרביים • כלי רחצה/טיפוח • מטען • משקפי שמש</p><button onclick="showPackingModal()">בדיקת תיק אחרונה ⚠️</button></div>`+nextBtn(0,'GET SOME SLEEP. TOMORROW WE PLAY.');
  }
  if(i===1){
+ h+=`<div class="card center"><div class="gold">☀️ בוקר יום ההולדת</div><h2>בוקר טוב, בת 24 ❤️</h2><p>האריזה מאתמול הייתה רק ההתחלה. עכשיו מתחיל היום עצמו — והיעד הראשון עומד להיחשף.</p></div>`;
  h+=`<div class="character-card"><img src="amit-scene-01-morning.png" alt="עמית ביום ההולדת"><div class="cap">BIRTHDAY GIRL MODE 🎂</div></div>`;
  h+=`<div class="card"><h3>GOOD MORNING, BIRTHDAY GIRL 🎂</h3><p>24. יום הולדת אחרון לפני החתונה.</p><div class="small">CASE № 24-08</div></div>`;
  h+=textQ('b1','18 + ? = הגיל של עמית היום',['6'],'✅ 24 YEARS SUCCESSFULLY CALCULATED.');
@@ -322,11 +324,11 @@ function renderLevel(i){
  h+=mcq('r1','מה עמית הייתה מעדיפה לקבל כרגע?',[{t:'🍳 ארוחת בוקר',ok:true,msg:'INTERESTING CHOICE... 👀'},{t:'💆‍♀️ מסאז׳',ok:false,msg:'REQUEST RECEIVED.'},{t:'🛍️ שופינג',ok:false,msg:'נתאי עזב את המשחק.'},{t:'📄 עוד טופס',ok:false,msg:'אנחנו מודאגים ממך.'}]);
  h+=textQ('r2','על עוגת יום הולדת כתובות רק הספרות של הגיל שלך. מה סכום שתי הספרות?',['6','שש'],'🎂 2 + 4 = 6.');
  h+=`<div class="card center"><div style="font-size:30px">💍💍💍💍💍</div><h3>ACHIEVEMENT UNLOCKED</h3><p>FUTURE MRS. COHEN</p></div>`;
- h+=`<div class="card"><h3>WHERE TO NEXT? ☕</h3>${hintBlock('marie',H.marie)}${textQ('marieAns','מה היעד הבא?',['קפה מארי','מארי','cafe marie','marie'],'☕ DESTINATION UNLOCKED: CAFE MARIE — ראשון לציון',15)}</div>`; if(S.done.marieAns)h+=songCard('marie','לקפה מארי'); h+=nextBtn(2);
+ h+=`<div class="card"><h3>WHERE TO NEXT? ☕</h3>${hintBlock('marie',H.marie)}${textQ('marieAns','מה היעד הבא?',['קפה מארי','מארי','cafe marie','marie'],'☕ DESTINATION UNLOCKED: קפה מארי — ראשון לציון',15)}</div>`; if(S.done.marieAns)h+=songCard('marie','לקפה מארי'); h+=nextBtn(2);
  }
  if(i===3){
  h+=`<div class="character-card"><img src="amit-scene-03-cafe.png" alt="עמית בקפה מארי"><div class="cap">DETECTIVE MODE 🕵️‍♀️</div></div>`;
- h+=`<div class="card"><h3>☕ CAFE MARIE — MEMORY MODE</h3><p>הפעם אין שאלת טריוויה על המסך הקודם. יש לך מבחן זיכרון אמיתי.</p></div>`;
+ h+=`<div class="card"><h3>☕ קפה מארי — MEMORY MODE</h3><p>הפעם אין שאלת טריוויה על המסך הקודם. יש לך מבחן זיכרון אמיתי.</p></div>`;
  if(!S.done.memoryViewed){
    h+=`<div class="card center"><h2>👀 8 SECOND MEMORY</h2><p>כשתלחצי START יופיע כרטיס ל־8 שניות בלבד. אחר כך הוא ייעלם ותקבלי 3 שאלות.</p><button onclick="startMemoryChallenge()">START MEMORY</button></div>`;
  } else {
@@ -350,9 +352,9 @@ function renderLevel(i){
  }
  if(i===5){
  h+=`<div class="character-card"><img src="amit-scene-05-hotel-pool.png" alt="עמית במלון"><div class="cap">HOTEL MODE 🏨</div></div><div class="card"><h3>13:00 — FIRST HOTEL SURPRISE</h3><p>הגעת ל־Royal Beach. אבל לפני חדר, מנוחה או שאלות מיותרות — יש הפתעה.</p><p class="sub">הפעם נתאי לא מצטרף אלייך.</p></div>`;
- h+=`<div class="card"><h3>WHAT DID HE BOOK? 🕵️‍♀️</h3>${hintBlock('soloSpa',H.soloSpa)}${textQ('soloSpaAns','מה מחכה לך עכשיו?',['עיסוי ראש','מסאז ראש','מסאז׳ ראש','טיפול ראש','עיסוי קצוות','ראש וקצוות','עיסוי ראש וקצוות','head massage'],'🔓 SOLO SURPRISE UNLOCKED — טיפול ראש וקצוות 💆‍♀️',20)}</div>`;
+ h+=`<div class="card"><h3>WHAT DID HE BOOK? 🕵️‍♀️</h3>${hintBlock('soloSpa',H.soloSpa)}${textQ('soloSpaAns','מה מחכה לך עכשיו?',['עיסוי ראש','מסאז ראש','מסאז׳ ראש','טיפול ראש','עיסוי קצוות','ראש וקצוות','עיסוי ראש וקצוות','head massage'],'🔓 הפתעת הסולו UNLOCKED — טיפול ראש וקצוות 💆‍♀️',20)}</div>`;
  if(S.done.soloSpaAns){
-   h+=`<div class="character-card unlock-pop"><img src="amit-scene-06-head-massage.png" alt="עמית במסאז ראש"><div class="cap">SOLO SURPRISE UNLOCKED 💆‍♀️</div></div>`;
+   h+=`<div class="character-card unlock-pop"><img src="amit-scene-06-head-massage.png" alt="עמית במסאז ראש"><div class="cap">הפתעת הסולו UNLOCKED 💆‍♀️</div></div>`;
    h+=textQ('soloSpaFeeling','לפני שאת נכנסת להתפנק — איך היית רוצה לצאת מהטיפול הזה?',['*'],'❤️ קיבלתי. עכשיו לכי להתפנק.',0,'רגועה / קלילה / מאושרת / כל דבר...');
    if(S.done.soloSpaFeeling){
      h+=`<div class="card center"><h2>JUST FOR AMIT ❤️</h2><p>🕐 ${S.settings.soloSpaTime}<br>${S.settings.soloSpaDuration!=='TBD'?`⏱️ ${S.settings.soloSpaDuration}`:''}</p><p>חפרת על זה מספיק זמן. הגיע הזמן.</p><button onclick="pauseSoloSpa()">I'M GOING IN 💆‍♀️</button></div>`;
@@ -394,12 +396,12 @@ function renderLevel(i){
  h+=mcq('g3','WHITE SUIT BOSS FIGHT — נתאי רוצה חליפה לבנה. מה עמית עושה?',[{t:'מכבדת את הבחירה',ok:false,msg:'❌'},{t:'מסבירה בעדינות',ok:false,msg:'עדין מדי.'},{t:'מבטלת חתונה',ok:false,msg:'קיצוני.'},{t:'אני מרגישה שאנחנו קצת כועסים',ok:true,msg:'💥 CRITICAL HIT. נתאי הפעיל: ✨ תודעת שפע ✨'}]);
  h+=textQ('g4','אם יש נר אחד לכל 6 שנות חיים, כמה נרות על העוגה?',['4','ארבע'],'✅ 4.');
  h+=`<div class="card center"><span class="memory-chip">CODE: 04</span><h3>SCANNING...</h3><p>OUTFIT ✓ • SHOES ✓ • PHONE ✓</p></div>`;
- h+=`<div class="card"><h3>🍽️ FIND TONIGHT'S DESTINATION</h3>${hintBlock('qumran',H.qumran)}${textQ('qumAns','איפה אוכלים הערב?',['קומראן','קומרן','qumran'],'🍽️ QUMRAN — 21:30',20)}</div>`; if(S.done.qumAns)h+=songCard('qumran','לקומראן'); h+=nextBtn(7);
+ h+=`<div class="card"><h3>🍽️ FIND TONIGHT'S DESTINATION</h3>${hintBlock('qumran',H.qumran)}${textQ('qumAns','איפה אוכלים הערב?',['קומראן','קומרן','qumran'],'🍽️ קומראן — 21:30',20)}</div>`; if(S.done.qumAns)h+=songCard('qumran','לקומראן'); h+=nextBtn(7);
  }
  if(i===8){
  if(S.substage!=='postDinner'){
    h+=`<div class="character-card"><img src="amit-scene-11-dinner.png" alt="עמית בקומראן"><div class="cap">DINNER MODE 🍸</div></div>`;
-   h+=`<div class="card"><h3>DESTINATION CONFIRMED ✅</h3><h2>QUMRAN</h2><p>ניסיון ראשון: ט״ו באב ❌<br>ניסיון שני: יום הולדת 24 ✅</p></div>`;
+   h+=`<div class="card"><h3>DESTINATION CONFIRMED ✅</h3><h2>קומראן</h2><p>ניסיון ראשון: ט״ו באב ❌<br>ניסיון שני: יום הולדת 24 ✅</p></div>`;
    h+=textQ('d1','רגע לפני שנכנסים: מה השעה עכשיו בערך?',['20','21',':'],'✅ TEMPORAL AWARENESS CONFIRMED.',10,'למשל 21:27');
    h+=textQ('d2','מה לדעתך יהיה הדבר הראשון שנתאי יזמין?',['*'],'🔮 PREDICTION SAVED.',0,'ניחוש חופשי...');
    if(S.done.d1&&S.done.d2){h+=`<div class="card center"><button onclick="showPhoneDownPopup()">להניח את הטלפון ולהתחיל את הערב ❤️</button></div>`;setTimeout(showPhoneDownPopup,80);}
@@ -413,7 +415,7 @@ function renderLevel(i){
  }
  }
  if(i===9){
- h+=`<div class="character-card"><img src="amit-scene-12-detective.png" alt="עמית בלשית בכספת"><div class="cap">FINAL BOSS DETECTIVE 🔐</div></div>`;
+ h+=`<div class="character-card"><img src="amit-scene-12-detective.png" alt="עמית בלשית בכספת"><div class="cap">השלב האחרון DETECTIVE 🔐</div></div>`;
  h+=`<div class="card"><h3>LEVEL 9A — FIND IT 🔎</h3><p>משהו מחכה לך בחדר. אני לא אגיד מה, ואני לא אגיד איפה.</p>${hintBlock('safe',H.safe)}${textQ('safePlace','איפה נמצא הדבר שאת מחפשת?',['כספת','הכספת','safe'],'🔐 LOCATION CONFIRMED: THE SAFE',15)}</div>`;
  h+=`<div class="card"><h3>LEVEL 9B — THE FOUR LOCKS</h3><p>ארבע ספרות. ארבע שאלות. NO MULTIPLE CHOICE.</p></div>`;
  h+=textQ('l1','LOCK #1 — איזה מספר הופיע ליד ROOM KEY?',['2'],'🔓 LOCK 1 OPEN — 2',0)+`<button class="secondary" onclick="replay('roomkey')">REPLAY MEMORY —5</button>`;
@@ -500,5 +502,28 @@ function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('
 if(S.started)renderHome();else renderStart();
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
 </script>
+
+<script>
+(function(){
+  const VERSION='v9.2-night-before';
+  try{
+    const prev=localStorage.getItem('amit_release_version');
+    if(prev!==VERSION){
+      localStorage.setItem('amit_release_version',VERSION);
+      // keep game settings if possible, but force fresh navigation state for this release
+      Object.keys(localStorage).forEach(k=>{
+        if(k.startsWith('amitGameV9') && k!=='amitGameV92') localStorage.removeItem(k);
+      });
+      if('caches' in window){
+        caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).catch(()=>{});
+      }
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});
+      }
+    }
+  }catch(e){}
+})();
+</script>
+
 </body>
 </html>
