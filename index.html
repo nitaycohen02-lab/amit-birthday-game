@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>AMIT'S BIRTHDAY GAME — V7.2</title>
-<!-- V7.2: MASTER BYPASS + CONTEXT CARICATURES + 24 SECONDS OF LIFE -->
+  <title>AMIT'S BIRTHDAY GAME — V8 FINAL</title>
+<!-- V8 FINAL: HEBREW UX + PERSISTENT ANSWERS + SOUND + ROAD SONGS + ENDING BLESSING -->
   <meta name="description" content="Amit's Birthday Game — Season 4">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -49,6 +49,12 @@
     .wish-quote{font-size:22px;color:var(--gold);font-weight:800;line-height:1.5;padding:16px;border:1px dashed #5b4726;border-radius:18px;margin:14px 0}.approval-gate .status{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}
     .gm-status{padding:12px;border:1px dashed #444;border-radius:14px;margin:12px 0;line-height:1.55}
     @media(max-width:380px){.inline{flex-direction:column}.inline button{width:100%}}
+
+    .done-card{border-color:#3f5f42;background:#111a12}.done-answer{margin-top:10px;padding:11px;border-radius:12px;background:#0d130e;color:#bfe5bf}
+    .sound-btn{position:fixed;right:16px;bottom:18px;width:44px;height:44px;border-radius:50%;padding:0;margin:0;background:#171717;color:#ddd;border:1px solid #333;z-index:30}
+    .big-code{font-size:64px;font-weight:900;letter-spacing:.16em;color:var(--gold);direction:ltr;margin:18px 0}
+    .song-card{border-color:#4a402f;background:linear-gradient(180deg,#18140e,#111)}
+    textarea.gm-text{width:100%;min-height:150px;background:#111;border:1px solid #333;color:#eee;padding:12px;border-radius:12px;margin:6px 0 12px;font-family:inherit;font-size:16px}
 </style>
 <!-- V5 FINAL SCHEDULE: 13:00 SOLO HEAD/ENDS + 17:00 COUPLES SWEDISH -->
 </head>
@@ -61,10 +67,10 @@
   </div>
   <main id="screen" class="screen"></main>
 </div>
-<button class="gm hidden" id="gmBtn" title="Game Master">⚙️</button>
+<button class="gm hidden" id="gmBtn" title="Game Master">⚙️</button><button class="sound-btn hidden" id="soundBtn" onclick="toggleSound()">🔊</button>
 
 <div id="gmPanel" class="gm-panel hidden"><div class="inner">
-  <h2>GAME MASTER</h2><p class="sub">מצב סודי לנתאי</p>
+  <h2>מנהל המשחק ⚙️</h2><p class="sub">מצב סודי לנתאי</p>
   <div class="card">
     <label>Disaster Meter</label><input type="number" min="0" max="100" id="gmDisaster"/>
     <label>נקודות</label><input type="number" id="gmScore"/>
@@ -77,21 +83,34 @@
     <label>מספר חדר</label><input id="gmRoom" placeholder="למשל 824"/>
     <label>Observation בחדר</label><input id="gmRoomObs" placeholder="למשל 4 כריות"/>
     <label>קוד כספת</label><input id="gmSafe" maxlength="4" placeholder="2584"/>
+    <hr style="border-color:#2b2b2b;margin:18px 0">
+    <h3>🎵 שירים לנסיעות</h3>
+    <label>לרבנות — שם השיר</label><input id="gmSongRabbinateName" placeholder="שם השיר"/>
+    <label>לרבנות — קישור</label><input id="gmSongRabbinateUrl" placeholder="Spotify / Apple Music / YouTube"/>
+    <label>לקפה מארי — שם השיר</label><input id="gmSongMarieName" placeholder="שם השיר"/>
+    <label>לקפה מארי — קישור</label><input id="gmSongMarieUrl" placeholder="קישור"/>
+    <label>למלון — שם השיר</label><input id="gmSongHotelName" placeholder="שם השיר"/>
+    <label>למלון — קישור</label><input id="gmSongHotelUrl" placeholder="קישור"/>
+    <label>לקומראן — שם השיר</label><input id="gmSongQumranName" placeholder="שם השיר"/>
+    <label>לקומראן — קישור</label><input id="gmSongQumranUrl" placeholder="קישור"/>
+    <hr style="border-color:#2b2b2b;margin:18px 0">
+    <h3>❤️ הברכה שלי לעמית</h3>
+    <textarea class="gm-text" id="gmBlessing" placeholder="כתוב כאן את הברכה שתופיע אחרי סיום כל המשחק..."></textarea>
     <button onclick="saveGMSettings()">שמור הגדרות</button>
   </div>
   <div class="card">
     <h3>אישור מעבר לשלב הבא</h3>
     <div id="gmApprovalStatus" class="gm-status"></div>
-    <button id="gmApproveBtn" onclick="approveNextLevel()">APPROVE NEXT LEVEL</button>
+    <button id="gmApproveBtn" onclick="approveNextLevel()">אשר מעבר לשלב הבא</button>
   </div>
   <div class="card">
-    <h3>MASTER BYPASS 🔓</h3>
+    <h3>עקיפת חירום 🔓</h3>
     <p class="sub">למקרה שנתקעים: מעבר מיידי לשלב הבא גם אם לא כל המשימות הושלמו.</p>
-    <button class="danger" onclick="masterBypassNext()">BYPASS TO NEXT LEVEL</button>
+    <button class="danger" onclick="masterBypassNext()">דלג לשלב הבא</button>
   </div>
   <div class="card">
     <label>פתיחה ידנית / חילוץ</label><select id="gmLevel"></select>
-    <button class="secondary" onclick="forceLevel()">FORCE OPEN LEVEL</button>
+    <button class="secondary" onclick="forceLevel()">פתח שלב ידנית</button>
   </div>
   <button class="secondary" onclick="closeGM()">סגור</button>
   <button class="danger" onclick="resetGame()">איפוס מלא</button>
@@ -111,19 +130,60 @@
 
 <script>
 const LEVELS=['PACKING MISSION','BIRTHDAY MORNING','THE RABBINATE','CAFE MARIE','ROAD TO TEL AVIV','SOLO SURPRISE','BIRTHDAY ARCHIVES + COUPLES SPA','GET READY','QUMRAN','FINAL BOSS'];
-const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},hints:{},wish:'',life24:'',settings:{soloSpaTime:'13:00',soloSpaDuration:'TBD',coupleSpaTime:'17:00',coupleSpaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584'}};
-let S; try{S=JSON.parse(localStorage.getItem('amitGameV72'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},answers:{},hints:{},wish:'',life24:'',sound:true,settings:{soloSpaTime:'13:00',soloSpaDuration:'TBD',coupleSpaTime:'17:00',coupleSpaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584',blessing:'',songs:{rabbinate:{name:'',url:''},marie:{name:'',url:''},hotel:{name:'',url:''},qumran:{name:'',url:''}}}};
+let S; try{S=JSON.parse(localStorage.getItem('amitGameV8'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+S.answers=S.answers||{}; if(typeof S.sound!=='boolean')S.sound=true; S.settings=S.settings||{};
+S.settings.songs=S.settings.songs||JSON.parse(JSON.stringify(DEF.settings.songs));
+for(const k of Object.keys(DEF.settings))if(S.settings[k]===undefined)S.settings[k]=JSON.parse(JSON.stringify(DEF.settings[k]));
 const $=id=>document.getElementById(id), screenEl=$('screen');
-function save(){localStorage.setItem('amitGameV72',JSON.stringify(S));topUI()}
+function save(){localStorage.setItem('amitGameV8',JSON.stringify(S));topUI()}
 function topUI(){$('score').textContent=S.score;$('disaster').textContent=S.disaster+'%';$('lvl').textContent=S.level;$('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
 function toast(t){let x=$('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1700)}
 function add(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
-function norm(v){return (v||'').toLowerCase().trim().replace(/[׳']/g,"'").replace(/\s+/g,' ')}
-function accepted(v,arr){v=norm(v);if(arr.includes('*'))return v.length>0;return arr.some(a=>v.includes(norm(a)))}
+
+let audioCtx=null;
+function tone(freq=440,dur=.08,type='sine',vol=.045){
+  if(!S.sound)return;
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type=type;o.frequency.value=freq;g.gain.value=vol;o.connect(g);g.connect(audioCtx.destination);
+    o.start();g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+function sfx(kind){
+  if(kind==='click')tone(330,.045,'sine',.025);
+  if(kind==='ok'){tone(660,.08,'sine',.04);setTimeout(()=>tone(880,.12,'sine',.04),70)}
+  if(kind==='bad'){tone(180,.12,'sawtooth',.025);setTimeout(()=>tone(135,.15,'sawtooth',.02),80)}
+  if(kind==='unlock'){tone(523,.08,'sine',.04);setTimeout(()=>tone(659,.08,'sine',.04),70);setTimeout(()=>tone(784,.16,'sine',.045),140)}
+  if(kind==='win'){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.22,'sine',.05),i*110))}
+}
+document.addEventListener('click',e=>{if(e.target.closest('button,a'))sfx('click')},true);
+function toggleSound(){S.sound=!S.sound;save();$('soundBtn').textContent=S.sound?'🔊':'🔇';toast(S.sound?'הסאונד פועל 🔊':'הסאונד כבוי 🔇')}
+
+function norm(v){return String(v??'').toLowerCase().trim().replace(/[׳'״"]/g,'').replace(/[־–—-]/g,' ').replace(/\s+/g,' ').replace(/[^0-9a-zא-ת: ]/gi,'')}
+function accepted(v,arr){
+  v=norm(v); if(arr.includes('*'))return v.length>0;
+  return arr.some(a=>{a=norm(a);return v===a||v.includes(a)||a.includes(v)});
+}
 function mcq(key,text,answers){return `<div class="card"><div class="q">${text}</div><div class="answers">${answers.map(a=>`<button class="answer" onclick="mcqPick('${key}',${a.ok},\`${a.msg}\`)">${a.t}</button>`).join('')}</div><div id="fb-${key}" class="feedback hidden"></div></div>`}
-function mcqPick(key,ok,msg){if(S.done[key])return;const fb=$('fb-'+key);fb.innerHTML=msg;fb.classList.remove('hidden');if(ok){S.done[key]=true;add(10);save();refreshApprovalGate()}else{toast('❌ לא נכון — נסי שוב')}}
-function textQ(key,text,answers,success,points=10,placeholder='הקלידי תשובה...'){return `<div class="card"><h3>${text}</h3><div class="inline"><input class="free-input" id="in-${key}" placeholder="${placeholder}"><button onclick='checkText("${key}",${JSON.stringify(answers)},${JSON.stringify(success)},${points})'>בדיקה</button></div><div id="fb-${key}" class="feedback hidden"></div></div>`}
-function checkText(key,answers,success,points){if(S.done[key])return;let v=$('in-'+key).value;if(accepted(v,answers)){S.done[key]=true;if(points)add(points);save();$('fb-'+key).innerHTML=success;$('fb-'+key).classList.remove('hidden');if(key==='p2')setTimeout(showPackingModal,350);refreshApprovalGate()}else toast('❌ נסי שוב')}
+function mcqPick(key,ok,msg){if(S.done[key])return;const fb=$('fb-'+key);fb.innerHTML=msg;fb.classList.remove('hidden');if(ok){S.done[key]=true;S.answers[key]='נבחרה תשובה נכונה';sfx('ok');add(10);save();refreshApprovalGate()}else{sfx('bad');toast('❌ לא נכון — נסי שוב')}}
+function textQ(key,text,answers,success,points=10,placeholder='הקלידי תשובה...'){
+  if(S.done[key])return `<div class="card done-card"><h3>${text}</h3><div class="done-answer">✅ נפתר: <b>${S.answers[key]||'תשובה נכונה'}</b></div></div>`;
+  return `<div class="card"><h3>${text}</h3><div class="inline"><input class="free-input" id="in-${key}" value="${(S.answers[key]||'').replace(/"/g,'&quot;')}" placeholder="${placeholder}"><button onclick='checkText("${key}",${JSON.stringify(answers)},${JSON.stringify(success)},${points})'>בדיקה</button></div><div id="fb-${key}" class="feedback hidden"></div></div>`;
+}
+function checkText(key,answers,success,points){
+  if(S.done[key])return;let el=$('in-'+key),v=el?el.value:'';
+  S.answers[key]=v;save();
+  if(accepted(v,answers)){
+    S.done[key]=true;sfx('ok');if(points)add(points);save();
+    let fb=$('fb-'+key);if(fb){fb.innerHTML=success;fb.classList.remove('hidden')}
+    if(key==='p2')setTimeout(showPackingModal,350);
+    if(['l1','l2','l3','l4'].includes(key)&&['l1','l2','l3','l4'].every(k=>S.done[k]))setTimeout(showCodePopup,300);
+    if(['d1','d2'].includes(key)&&S.done.d1&&S.done.d2)setTimeout(showPhoneDownPopup,350);
+    refreshApprovalGate();
+  }else{sfx('bad');toast('❌ לא נכון — נסי שוב')}
+}
 const H={
  rabbinate:['💍 יש קשר לחתונה.','📄 אנחנו צריכים לפתוח משהו, וזה לא בקבוק שמפניה.','🇮🇱 המקום שבו רומנטיקה פוגשת בירוקרטיה.'],
  marie:['☕ במקום הבא לא חותמים על שום דבר.','📍 חוזרים לעיר שבה הכול התחיל, למרות שהתעקשנו שלא.','👩🏻 השם שאת מחפשת הוא שם של אישה.','☕ MAR_ _'],
@@ -141,9 +201,18 @@ const H={
    '💆‍♂️💆‍♀️ שני אנשים. שני טיפולים. חדר אחד.',
    '❤️ הפעם נתאי מצטרף.'
  ],
- qumran:['📅 המקום הבא כבר כמעט היה חלק מהסיפור שלנו פעם אחת.','❤️ היינו אמורים להיות שם בט״ו באב… אבל ביטלו לנו.','📜 השם שלו נשמע כאילו הוא שייך למגילות עתיקות.','🏺 מגילות. מערות. ים המלח.'],
+ qumran:['📅 המקום הבא כבר כמעט היה חלק מהסיפור שלנו פעם אחת.','📜 השם שלו נשמע כאילו הוא שייך למשהו עתיק.','🏺 מגילות. מערות. ים המלח.','❤️ היינו אמורים להיות שם בט״ו באב… אבל ביטלו לנו.'],
  safe:['🏨 את לא צריכה לצאת מהחדר.','🔒 המקום נועד לשמור על דברים שלא משאירים סתם בחוץ.','🔢 הוא אוהב מספרים יותר ממפתחות.']
 };
+
+function songCard(key,title){
+  const x=S.settings.songs?.[key]||{};
+  if(!x.url)return `<div class="card song-card"><h3>🎵 שיר לדרך</h3><p class="sub">היעד נפתח. נתאי עוד לא הגדיר שיר לנסיעה הזאת.</p></div>`;
+  const name=x.name||'השיר שלנו לדרך';
+  return `<div class="card song-card center"><h3>🎵 שיר לדרך — ${title}</h3><p><b>${name}</b></p><button onclick="openSong('${key}')">▶️ הפעילי את השיר לנסיעה</button></div>`;
+}
+function openSong(key){const u=S.settings.songs?.[key]?.url;if(u)window.open(u,'_blank')}
+
 function hintBlock(id,hints){let n=S.hints[id]||0;let shown=hints.slice(0,n).map((h,i)=>`<div class="hint">HINT #${i+1}<br>${h}</div>`).join('');let btn=n<hints.length?`<button class="secondary" onclick="useHint('${id}')">${n?'עוד רמז':'תני לי רמז'} —5 🏆</button>`:'';return `<div id="h-${id}">${shown}${btn}</div>`}
 function useHint(id){S.hints[id]=(S.hints[id]||0)+1;add(-5);renderLevel(S.level)}
 function showPackingModal(){$('packingModal').classList.remove('hidden')} function closePackingModal(){S.done.packingConfirmed=true;save();$('packingModal').classList.add('hidden');refreshApprovalGate()}
@@ -163,13 +232,13 @@ const REQUIRED={
 function requiredFor(i){return REQUIRED[i]||[]}
 function levelReady(i){return requiredFor(i).every(k=>S.done[k])}
 function completionCount(i){let r=requiredFor(i);return [r.filter(k=>S.done[k]).length,r.length]}
-function gateHTML(i,label='MISSION STATUS'){
+function gateHTML(i,label='מצב המשימה'){
   if(i>=9)return '';
   let [done,total]=completionCount(i);
   if(!levelReady(i))return `<div class="approval-gate" id="approvalGate"><h3>${label}</h3><div class="status">הושלמו ${done} מתוך ${total} משימות חובה.<br>השלב הבא יישאר נעול עד שכל המשימות יושלמו נכון.</div></div>`;
-  return `<div class="approval-gate ready waiting" id="approvalGate"><h3>MISSION COMPLETE ✅</h3><div class="status"><b>NEXT DESTINATION: CLASSIFIED 🔒</b><br><br>Waiting for Game Master approval...</div></div>`;
+  return `<div class="approval-gate ready waiting" id="approvalGate"><h3>המשימה הושלמה ✅</h3><div class="status"><b>היעד הבא: חסוי 🔒</b><br><br>ממתינים לאישור של מנהל המשחק...</div></div>`;
 }
-function nextBtn(i,label='MISSION STATUS'){return gateHTML(i,label)}
+function nextBtn(i,label='מצב המשימה'){return gateHTML(i,label)}
 function refreshApprovalGate(){let g=$('approvalGate');if(g&&Number.isInteger(S.level))g.outerHTML=gateHTML(S.level)}
 function approveNextLevel(){
   let i=S.level;
@@ -178,9 +247,9 @@ function approveNextLevel(){
   if(!S.unlocked.includes(i+1))S.unlocked.push(i+1);
   S.level=i+1;S.substage='main';save();closeGM();renderLevel(i+1);
 }
-function renderStart(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><div style="font-size:28px">🎈🎈🎈🎈🎈🎈🎈🎈</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><img class="character" src="amit-cartoon.png" alt="Amit Birthday Game caricature"><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
+function renderStart(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');$('soundBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><div style="font-size:28px">🎈🎈🎈🎈🎈🎈🎈🎈</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><img class="character" src="amit-cartoon.png" alt="Amit Birthday Game caricature"><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
 function start(){S.started=true;save();renderHome()}
-function renderHome(){$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');topUI();screenEl.innerHTML=`<div class="card"><div class="small">CURRENT MISSION</div><h2>${LEVELS[S.level]}</h2><button onclick="renderLevel(${S.level})">CONTINUE</button></div><div class="card"><h3>🚨 BIRTHDAY DISASTER METER™</h3><p>${S.disaster<20?'🟢 EVERYTHING SUSPICIOUSLY FINE':S.disaster<50?'🟠 WE MAY HAVE AN INCIDENT':'🔴 THIS IS NOW A STORY'}</p></div>${LEVELS.map((x,i)=>`<div class="route-item ${S.unlocked.includes(i)?'':'locked'}">${S.unlocked.includes(i)?(i===S.level?'▶':'✓'):'🔒'} ${S.unlocked.includes(i)?x:'CLASSIFIED'}</div>`).join('')}`}
+function renderHome(){$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');$('soundBtn').classList.remove('hidden');$('soundBtn').textContent=S.sound?'🔊':'🔇';topUI();screenEl.innerHTML=`<div class="card"><div class="small">המשימה הנוכחית</div><h2>${LEVELS[S.level]}</h2><button onclick="renderLevel(${S.level})">המשך</button></div><div class="card"><h3>🚨 BIRTHDAY DISASTER METER™</h3><p>${S.disaster<20?'🟢 EVERYTHING SUSPICIOUSLY FINE':S.disaster<50?'🟠 WE MAY HAVE AN INCIDENT':'🔴 THIS IS NOW A STORY'}</p></div>${LEVELS.map((x,i)=>`<div class="route-item ${S.unlocked.includes(i)?'':'locked'}">${S.unlocked.includes(i)?(i===S.level?'▶':'✓'):'🔒'} ${S.unlocked.includes(i)?x:'CLASSIFIED'}</div>`).join('')}`}
 function startMemoryChallenge(){
  screenEl.innerHTML=`<div class="pause"><div class="card center"><h2>MEMORIZE THIS 👀</h2><div style="font-size:38px">🎂 🕐 🎁 👑</div><p><b>5 נרות</b> על העוגה</p><p>השעה: <b>13:00</b></p><p>3 מתנות 🎁🎁🎁</p><span class="memory-chip">QUEEN</span><p class="small">הכרטיס ייעלם בעוד <b id="memCount">8</b> שניות...</p></div></div>`;
  let n=8;let t=setInterval(()=>{n--;let e=$('memCount');if(e)e.textContent=n;if(n<=0){clearInterval(t);S.done.memoryViewed=true;save();renderLevel(3)}},1000)
@@ -195,7 +264,7 @@ function startLife24(){
     if(n<=0){
       clearInterval(t);
       S.done.road24=true; save();
-      screenEl.innerHTML=`<div class="pause"><div class="card center reflect-card unlock-pop"><h1>TIME'S UP ❤️</h1><p>אולי 24 שניות לא מספיקות לחיים שלמים.</p><p>מזל שיש לך עוד הרבה זמן להגשים את כל מה שאמרת.</p><button onclick="renderLevel(4)">CONTINUE</button></div></div>`;
+      screenEl.innerHTML=`<div class="pause"><div class="card center reflect-card unlock-pop"><h1>TIME'S UP ❤️</h1><p>אולי 24 שניות לא מספיקות לחיים שלמים.</p><p>מזל שיש לך עוד הרבה זמן להגשים את כל מה שאמרת.</p><button onclick="renderLevel(4)">המשך</button></div></div>`;
     }
   },1000);
 }
@@ -217,7 +286,7 @@ function pauseCoupleSpa(){
 function returnFromCoupleSpa(){S.done.coupleSpaReturned=true;save();renderLevel(6)}
 
 function renderLevel(i){
- if(Number.isInteger(i)){S.level=i;save()}$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');let h=`<div class="hero"><div class="gold">LEVEL ${S.level}</div><h2>${LEVELS[S.level]}</h2></div>`;
+ if(Number.isInteger(i)){S.level=i;save()}$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');$('soundBtn').classList.remove('hidden');$('soundBtn').textContent=S.sound?'🔊':'🔇';let h=`<div class="hero"><div class="gold">LEVEL ${S.level}</div><h2>${LEVELS[S.level]}</h2></div>`;
  if(i===0){
  h+=`<div class="card"><p>מחר מתחיל המשחק. את לא יודעת לאן. את לא יודעת מה עושים. והטעות הראשונה שלך הייתה לתת לנתאי לתכנן הכול.</p><h3>MISSION: PACK YOUR SH*T 🎒</h3></div>`;
  h+=mcq('p1','מחר מישהו זר כנראה ייגע בך במשך כמעט שעה. מה כדאי שיהיה בתיק?',[{t:'צו הרחקה',ok:false,msg:'❌ ניסיון יפה.'},{t:'בגד ים',ok:true,msg:'✅ ITEM UNLOCKED: בגד ים.'},{t:'אפוד קרמי',ok:false,msg:'❌ זה לא מילואים.'},{t:'נתאי',ok:false,msg:'❌ הוא כבר מגיע בחבילה.'}]);
@@ -232,14 +301,15 @@ function renderLevel(i){
  h+=textQ('b1','18 + ? = הגיל של עמית היום',['6'],'✅ 24 YEARS SUCCESSFULLY CALCULATED.');
  h+=textQ('b2','בלי לחזור אחורה: כמה לבבות מופיעים למעלה במשחק?',['3','שלוש'],'✅ GOOD. SHE’S PAYING ATTENTION.');
  h+=mcq('b3','עמית נולדה ב־2002. מה הכי נכון לתאר את זה?',[{t:'Vintage 2002',ok:true,msg:'✅ VINTAGE 2002.'},{t:'דור האלפא',ok:false,msg:'❌'},{t:'1990s kid',ok:false,msg:'❌'},{t:'לא מדברים על גיל',ok:false,msg:'Fair.'}]);
- h+=`<div class="card"><h3>TODAY'S FIRST MYSTERY 🔎</h3>${hintBlock('rabbinate',H.rabbinate)}${textQ('rabbinateAns','לאן נוסעים?',['רבנות','הרבנות','תיק נישואים','תיק נישואין','פתיחת תיק'],'🔓 DESTINATION UNLOCKED: הרבנות 💍📄',15)}</div>`+nextBtn(1);
+ if(S.done.rabbinateAns)h+=songCard('rabbinate','לרבנות');
+ h+=`<div class="card"><h3>TODAY'S FIRST MYSTERY 🔎</h3>${hintBlock('rabbinate',H.rabbinate)}${textQ('rabbinateAns','לאן נוסעים?',['רבנות','הרבנות','תיק נישואים','תיק נישואין','פתיחת תיק'],'🔓 DESTINATION UNLOCKED: הרבנות 💍📄',15)}</div>`; if(S.done.rabbinateAns)h+=songCard('rabbinate','לרבנות'); h+=nextBtn(1);
  }
  if(i===2){
  h+=`<div class="card"><p><b>LOCATION:</b> הרבנות<br><b>ROMANCE:</b> 3%<br><b>BUREAUCRACY:</b> 97%</p><h3>GET LEGALLY CLOSER TO COHEN 💍</h3></div>`;
  h+=mcq('r1','מה עמית הייתה מעדיפה לקבל כרגע?',[{t:'🍳 ארוחת בוקר',ok:true,msg:'INTERESTING CHOICE... 👀'},{t:'💆‍♀️ מסאז׳',ok:false,msg:'REQUEST RECEIVED.'},{t:'🛍️ שופינג',ok:false,msg:'נתאי עזב את המשחק.'},{t:'📄 עוד טופס',ok:false,msg:'אנחנו מודאגים ממך.'}]);
  h+=textQ('r2','על עוגת יום הולדת כתובות רק הספרות של הגיל שלך. מה סכום שתי הספרות?',['6','שש'],'🎂 2 + 4 = 6.');
  h+=`<div class="card center"><div style="font-size:30px">💍💍💍💍💍</div><h3>ACHIEVEMENT UNLOCKED</h3><p>FUTURE MRS. COHEN</p></div>`;
- h+=`<div class="card"><h3>WHERE TO NEXT? ☕</h3>${hintBlock('marie',H.marie)}${textQ('marieAns','מה היעד הבא?',['קפה מארי','מארי','cafe marie','marie'],'☕ DESTINATION UNLOCKED: CAFE MARIE — ראשון לציון',15)}</div>`+nextBtn(2);
+ h+=`<div class="card"><h3>WHERE TO NEXT? ☕</h3>${hintBlock('marie',H.marie)}${textQ('marieAns','מה היעד הבא?',['קפה מארי','מארי','cafe marie','marie'],'☕ DESTINATION UNLOCKED: CAFE MARIE — ראשון לציון',15)}</div>`; if(S.done.marieAns)h+=songCard('marie','לקפה מארי'); h+=nextBtn(2);
  }
  if(i===3){
  h+=`<div class="character-card"><img src="amit-detective.png" alt="Amit detective caricature"><div class="cap">DETECTIVE MODE 🕵️‍♀️</div></div>`;
@@ -262,7 +332,7 @@ function renderLevel(i){
    h+=`<div class="card reflect-card"><h3>ONE THING TO KEEP ❤️</h3><p>מתוך כל מה שאמרת ב־24 השניות — מה הדבר האחד שאת באמת רוצה שיקרה השנה?</p><div class="inline"><input class="free-input" id="life24Input" value="${S.life24||''}" placeholder="דבר אחד שאני רוצה השנה..."><button onclick="saveLife24()">שמרי</button></div><div id="life24Saved" class="feedback ${S.done.life24Saved?'':'hidden'}">✨ נשמר. נחזור לזה בהמשך.</div></div>`;
  }
  h+=textQ('t2','איזה מספר הופיע ליד ROOM KEY בארוחת הבוקר?',['2','שתיים'],'✅ SHE NOTICED 😳',15)+`<div class="card"><button class="secondary" onclick="replay('roomkey')">REPLAY MEMORY —5</button></div>`;
- h+=`<div class="card"><h3>WHERE ARE WE SLEEPING TONIGHT? 👑🌊</h3>${hintBlock('hotel',H.hotel)}${textQ('hotelAns','שם המלון:',['royal beach','רויאל ביץ','רויאל ביץ׳'],'🔓 ROYAL BEACH TEL AVIV — ARRIVAL 13:00',20)}</div>`;
+ h+=`<div class="card"><h3>WHERE ARE WE SLEEPING TONIGHT? 👑🌊</h3>${hintBlock('hotel',H.hotel)}${textQ('hotelAns','שם המלון:',['royal beach','רויאל ביץ','רויאל ביץ׳'],'🔓 ROYAL BEACH TEL AVIV — ARRIVAL 13:00',20)}</div>`; if(S.done.hotelAns)h+=songCard('hotel','למלון');
  h+=`<div class="card center"><h3>🏆 HOTEL HUNTER</h3><span class="memory-chip">EST. 2002</span></div>`; h+=`<div class="card"><h3>🎂 BIRTHDAY WISH</h3><p>אם היית צריכה לבחור דבר אחד שאת מאחלת לעצמך לשנה הקרובה — מה הוא?</p><div class="inline"><input class="free-input" id="wishInput" value="${S.wish||''}" placeholder="המשאלה שלי..."><button onclick="saveWish()">שמרי ✨</button></div><div id="wishSaved" class="feedback ${S.done.birthdayWish?'':'hidden'}">✨ המשאלה נשמרה. המשחק לא שכח.</div></div>`+nextBtn(4);
  }
  if(i===5){
@@ -277,20 +347,20 @@ function renderLevel(i){
  }
  if(S.done.soloSpaReturned){
    h+=`<div class="card center"><h3>WELCOME BACK ✨</h3><p>ראש: רגוע ✅<br>קצוות: טופלו ✅<br>מה קרה בחדר בזמן הזה: CLASSIFIED 🔒</p></div>`;
-   h+=nextBtn(5,'FIRST SURPRISE STATUS');
+   h+=nextBtn(5,'מצב ההפתעה הראשונה');
  }
  }
  if(i===6){
- h+=`<div class="character-card"><img src="amit-spa.png" alt="Amit spa caricature"><div class="cap">SPA DAY CONTINUES 💆‍♀️</div></div>`;
+ h+=`<div class="character-card"><img src="amit-spa.png" alt="Amit spa caricature"><div class="cap">SPA DAY המשךS 💆‍♀️</div></div>`;
  h+=`<div class="card"><h3>ROOM UPDATED 🏨✨</h3><p>בזמן שהיית במשימה הסודית שלך, משהו בחדר השתנה.</p><p class="sub">מומלץ להסתכל מסביב. המשחק זוכר דברים שאת לא בהכרח זוכרת.</p></div>`;
- h+=textQ('h1','מה מספר החדר שלנו?',[S.settings.room],'✅ BASIC SURVIVAL SKILLS CONFIRMED.');
- h+=textQ('h2','Observation Challenge בחדר — מה התשובה שה־Game Master הגדיר?',[S.settings.roomObs],'✅ HOTEL DETECTIVE',15,'תשובה לפי מה שראית...');
+ h+=textQ('h1','מה מספר החדר שלנו?',[String(S.settings.room)],'✅ מספר החדר אומת.');
+ h+=textQ('h2','👀 אתגר תשומת לב בחדר — מה הדבר שנתאי ביקש ממך לשים לב אליו?',[String(S.settings.roomObs)],'✅ בלשית המלון פתרה את זה.',15,'כתבי מה ראית...');
  h+=`<div class="card"><h3>🗃️ BIRTHDAY ARCHIVES UNLOCKED</h3><p>2023 • 2024 • 2025</p></div>`;
  h+=mcq('a1','2023 — מי ארגן לעמית את החגיגה בפטריקס?',[{t:'עמית',ok:true,msg:'✅ FILE DECLASSIFIED.'},{t:'נתאי',ok:false,msg:'❌'},{t:'החברות',ok:false,msg:'❌'},{t:'Tomorrowland',ok:false,msg:'שאפתני.'}]);
  h+=textQ('a2','2023 — מה חיכה לנתאי בבוקר שאחרי?',['קריית שמונה','אוטובוסים לקריית שמונה'],'✅ אוטובוסים לקריית שמונה.');
- h+=textQ('a3','2024 — בכמה זמן איחרה הברכה?',['1:43','שעה ו43','שעה ו־43','שעה ו-43'],'✅ עמית זוכרת.');
- h+=textQ('a4','2024 — איפה היה החשוד?',['כותל','הכותל'],'✅ REDEMPTION: יקב + סוסים.');
- h+=textQ('a5','2025 — מה קרה אחרי שגילינו שהשמלות נשארו בבית?',['חזרנו','חזרנו להביא','חזרנו להביא את השמלות'],'👗 NEVER FORGET.');
+ h+=textQ('a3','2024 — בכמה זמן איחרה הברכה?',['1:43','1 43','שעה ו43','שעה ו־43','שעה ו-43','שעה וארבעים ושלוש דקות'],'✅ עמית זוכרת.');
+ h+=textQ('a4','2024 — איפה היה החשוד?',['כותל','הכותל','בכותל'],'✅ REDEMPTION: יקב + סוסים.');
+ h+=textQ('a5','2025 — מה קרה אחרי שגילינו שהשמלות נשארו בבית?',['חזרנו','חזרנו להביא','חזרנו להביא את השמלות','נסענו חזרה','נסענו חזרה להביא','חזרנו הביתה','חזרנו לקחת את השמלות'],'👗 NEVER FORGET.');
  h+=textQ('a6','כמה ימי הולדת היו לעמית לפני יום ההולדת הנוכחי?',['23'],'✅ 23. הנוכחי עדיין בחקירה.');
  h+=`<div class="card center"><h3>ARCHIVE VERIFIED</h3><span class="memory-chip">FILE 05</span></div>`;
  h+=`<div class="card"><h3>17:00 — SECOND SPA TRANSMISSION 💆‍♂️💆‍♀️</h3><p>חשבת שטיפול אחד סגר את פינת הספא להיום?</p>${hintBlock('coupleSpa',H.coupleSpa)}${textQ('coupleSpaAns','מה מחכה לנו בשעה 17:00?',['עיסוי שוודי','מסאז שוודי','מסאז׳ שוודי','עיסוי זוגי','מסאז זוגי','מסאז׳ זוגי','עיסוי שוודי זוגי','swedish massage'],'🔓 COUPLES SPA UNLOCKED — עיסוי שוודי זוגי ❤️',20)}</div>`;
@@ -300,7 +370,7 @@ function renderLevel(i){
  if(S.done.coupleSpaReturned){
    h+=`<div class="card center"><h3>COUPLES SPA COMPLETE ✅</h3><p>עכשיו באמת אפשר להתחיל לחשוב על הערב.</p></div>`;
  }
- h+=nextBtn(6,'AFTERNOON STATUS');
+ h+=nextBtn(6,'מצב אחר הצהריים');
  }
  if(i===7){
  h+=`<div class="character-card"><img src="amit-glam.png" alt="Amit getting ready caricature"><div class="cap">GET READY MODE ✨</div></div>`;
@@ -311,7 +381,7 @@ function renderLevel(i){
  h+=mcq('g3','WHITE SUIT BOSS FIGHT — נתאי רוצה חליפה לבנה. מה עמית עושה?',[{t:'מכבדת את הבחירה',ok:false,msg:'❌'},{t:'מסבירה בעדינות',ok:false,msg:'עדין מדי.'},{t:'מבטלת חתונה',ok:false,msg:'קיצוני.'},{t:'אני מרגישה שאנחנו קצת כועסים',ok:true,msg:'💥 CRITICAL HIT. נתאי הפעיל: ✨ תודעת שפע ✨'}]);
  h+=textQ('g4','אם יש נר אחד לכל 6 שנות חיים, כמה נרות על העוגה?',['4','ארבע'],'✅ 4.');
  h+=`<div class="card center"><span class="memory-chip">CODE: 04</span><h3>SCANNING...</h3><p>OUTFIT ✓ • SHOES ✓ • PHONE ✓</p></div>`;
- h+=`<div class="card"><h3>🍽️ FIND TONIGHT'S DESTINATION</h3>${hintBlock('qumran',H.qumran)}${textQ('qumAns','איפה אוכלים הערב?',['קומראן','קומרן','qumran'],'🍽️ QUMRAN — 21:30',20)}</div>`+nextBtn(7);
+ h+=`<div class="card"><h3>🍽️ FIND TONIGHT'S DESTINATION</h3>${hintBlock('qumran',H.qumran)}${textQ('qumAns','איפה אוכלים הערב?',['קומראן','קומרן','qumran'],'🍽️ QUMRAN — 21:30',20)}</div>`; if(S.done.qumAns)h+=songCard('qumran','לקומראן'); h+=nextBtn(7);
  }
  if(i===8){
  if(S.substage!=='postDinner'){
@@ -319,14 +389,14 @@ function renderLevel(i){
    h+=`<div class="card"><h3>DESTINATION CONFIRMED ✅</h3><h2>QUMRAN</h2><p>ניסיון ראשון: ט״ו באב ❌<br>ניסיון שני: יום הולדת 24 ✅</p></div>`;
    h+=textQ('d1','רגע לפני שנכנסים: מה השעה עכשיו בערך?',['20','21',':'],'✅ TEMPORAL AWARENESS CONFIRMED.',10,'למשל 21:27');
    h+=textQ('d2','מה לדעתך יהיה הדבר הראשון שנתאי יזמין?',['*'],'🔮 PREDICTION SAVED.',0,'ניחוש חופשי...');
-   if(S.done.d1&&S.done.d2)h+=`<div class="card center"><button onclick="pauseDinner()">PAUSE GAME 🍽️</button></div>`;
+   if(S.done.d1&&S.done.d2){h+=`<div class="card center"><button onclick="showPhoneDownPopup()">להניח את הטלפון ולהתחיל את הערב ❤️</button></div>`;setTimeout(showPhoneDownPopup,80);}
  } else {
    h=`<div class="hero"><div class="gold">LEVEL 8</div><h2>WELCOME BACK.</h2><p>DAY PROGRESS: 87%</p><h1>CUTE.</h1></div>`; if(S.life24)h+=`<div class="card center"><h3>⏱️ REMEMBER YOUR 24 SECONDS?</h3><p>בחרת דבר אחד שאת באמת רוצה שיקרה השנה:</p><div class="wish-quote">״${S.life24}״</div></div>`; if(S.wish)h+=`<div class="card center"><h3>✨ REMEMBER THIS?</h3><p>מוקדם יותר היום ביקשתי ממך משאלה אחת לשנה הקרובה.</p><div class="wish-quote">״${S.wish}״</div><p>אני לא יודע אם אני יכול להגשים לך כל משאלה.<br>אבל אני כן מבטיח להיות לידך בדרך אליה. ❤️</p></div>`;
    h+=textQ('cp1','מה הייתה התחנה הראשונה של היום?',['רבנות','הרבנות'],'✅ CHECKPOINT');
    h+=textQ('cp2','איזה מספר הופיע ליד ROOM KEY?',['2'],'✅ CHECKPOINT');
    h+=textQ('cp3','מה היה THE 1:43 INCIDENT?',['ברכה','איחור','איחור בברכה'],'✅ CHECKPOINT');
    h+=`<div class="card center"><p>ENDING BIRTHDAY GAME...</p><p>87%</p><h2>ERROR.</h2><p>REWARD NOT FOUND.</p><h1>⚠️ WAIT.</h1></div>`;
-   h+=nextBtn(8,'FINAL CHECKPOINT');
+   h+=nextBtn(8,'נקודת הבדיקה האחרונה');
  }
  }
  if(i===9){
@@ -337,18 +407,49 @@ function renderLevel(i){
  h+=textQ('l2','LOCK #2 — איזה מספר הופיע ליד FILE כשארכיון ימי ההולדת נסגר?',['5','05'],'🔓 LOCK 2 OPEN — 5',0)+`<button class="secondary" onclick="replay('file05')">REPLAY MEMORY —5</button>`;
  h+=textQ('l3','LOCK #3 — כמה בלונים היו במסך הראשון?',['8','שמונה'],'🔓 LOCK 3 OPEN — 8',0)+`<button class="secondary" onclick="replay('balloons')">REPLAY THE NIGHT —5</button>`;
  h+=textQ('l4','LOCK #4 — איזה מספר הופיע ליד CODE בזמן ההתארגנות?',['4','04'],'🔓 FINAL LOCK OPEN — 4',0)+`<button class="secondary" onclick="replay('code04')">REPLAY MEMORY —5</button>`;
- if(S.done.l1&&S.done.l2&&S.done.l3&&S.done.l4)h+=`<div class="card final center"><h2>🔐 FINAL CODE UNLOCKED</h2><div class="big gold">${S.settings.safe}</div><p>עכשיו לכי לכספת. ❤️</p><button onclick="showEnding()">פתחתי את הכספת ❤️</button></div>`;
+ if(S.done.l1&&S.done.l2&&S.done.l3&&S.done.l4){setTimeout(showCodePopup,80);h+=`<div class="card final center"><h2>🔐 הקוד הסופי נחשף</h2><div class="big gold">${S.settings.safe}</div><p>עכשיו לכי לכספת. ❤️</p><button onclick="showEnding()">פתחתי את הכספת ❤️</button></div>`;}
  else h+=`<div class="card center"><p class="sub">פתרי את כל ארבעת המנעולים כדי לחשוף את הקוד.</p></div>`;
  }
  screenEl.innerHTML=h;
 }
+
+function showOverlay(title,body,button='הבנתי ✓',after=''){
+  const d=document.createElement('div');d.className='modal';d.id='dynamicModal';
+  d.innerHTML=`<div class="modal-box unlock-pop"><h2>${title}</h2>${body}<button onclick="closeOverlay('${after}')">${button}</button></div>`;
+  document.body.appendChild(d);
+}
+function closeOverlay(after=''){let d=$('dynamicModal');if(d)d.remove();if(after&&window[after])window[after]()}
+function showPhoneDownPopup(){
+  if($('dynamicModal')||S.done.phoneDownShown)return;
+  S.done.phoneDownShown=true;save();sfx('unlock');
+  showOverlay('📵 זה הזמן להניח את הפלאפון',`<p>מכאן לא צריך לפתור, לנחש או לבדוק שום דבר.</p><h3>פשוט תהני מהרגע ❤️</h3><p class="sub">המשחק יחכה לך כאן.</p>`,'✨ סיימתי עם הטלפון — תפתיע אותי','pauseDinner');
+}
+function showCodePopup(){
+  if($('dynamicModal')||S.done.codePopupShown)return;
+  S.done.codePopupShown=true;save();sfx('unlock');
+  showOverlay('🔓 הכספת נפתחה',`<p>הצלחת לפצח את כל ארבעת המנעולים.</p><p>הקוד שלך הוא:</p><div class="big-code">${S.settings.safe}</div><p>📸 צלמי מסך — תצטרכי את הקוד הזה עכשיו.</p>`,'שמרתי את הקוד ✓');
+}
+
 function pauseDinner(){screenEl.innerHTML=`<div class="pause"><h1>🍽️ DINNER MODE</h1><p class="sub">אין שאלות. אין רמזים. שימי את הטלפון בצד ותיהני מהערב. ❤️</p><button onclick="returnFromDinner()">DINNER COMPLETE ✓</button></div>`}
 function returnFromDinner(){S.done.dinnerReturned=true;S.substage='postDinner';save();renderLevel(8)}
-function showEnding(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero final"><div class="gold">GAME COMPLETE ❤️</div><h1>100%</h1><p>עוד יום הולדת אחד שעברנו יחד.</p><p>היו לנו כבר ימי הולדת עם אפטר, ברכה שאיחרה בשעה ו־43 דקות, יקב, סוסים, כרמים ושמלות שהחליטו להישאר בבית.</p><p>אבל השנה הזאת קצת אחרת — כי זה יום ההולדת האחרון שלך לפני שאנחנו מתחתנים.</p><p>מחוף 4×4 בראשון, דרך הנשיקה הראשונה בסיני, ועד ההפתעה בפאפוס — עברנו דרך די ארוכה.</p><h2>והחלק שאני הכי מחכה לו עדיין לפנינו.</h2><h2>יום הולדת שמח, מאמי ❤️</h2>${S.wish?`<div class="card"><div class="small">YOUR WISH FOR 24</div><div class="wish-quote">״${S.wish}״</div><p>שמרי אותה. נחזור אליה בגיל 25. ❤️</p></div>`:''}<div class="card"><div class="small">NEW LEVEL DETECTED...</div><h1 class="gold">08.10.2026 💍</h1><p>COHEN × COHEN</p><b>COMING SOON.</b></div><p class="small">SEASON 4 — COMPLETE.</p></div>`}
+function showEnding(){
+ $('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');$('soundBtn').classList.add('hidden');sfx('win');
+ screenEl.innerHTML=`<div class="hero final unlock-pop"><div class="big">🏆❤️</div><div class="gold">המשחק הושלם</div><h1>עמית, עשית את זה!</h1><p>פתרת את החידות, מצאת את היעדים, שרדת את נתאי והגעת עד הסוף.</p><h2>כל הכבוד, ילדת יום ההולדת ❤️</h2><p class="sub">SEASON 4 — 100% COMPLETE</p><button onclick="showBlessing()">יש עוד דבר אחד… ❤️</button></div>`;
+}
+function showBlessing(){
+ const b=(S.settings.blessing||'').trim();
+ screenEl.innerHTML=`<div class="hero final unlock-pop"><div class="gold">מנתאי לעמית ❤️</div><h2>הברכה שלך</h2>${b?`<div class="card" style="white-space:pre-wrap;text-align:right;line-height:1.8">${b}</div>`:`<div class="card"><p>הברכה עדיין לא הוגדרה במנהל המשחק.</p></div>`}${S.wish?`<div class="card"><div class="small">המשאלה שלך לגיל 24</div><div class="wish-quote">״${S.wish}״</div></div>`:''}<div class="card"><div class="small">השלב הבא שלנו...</div><h1 class="gold">08.10.2026 💍</h1><p>COHEN × COHEN</p><b>COMING SOON.</b></div><h2>יום הולדת שמח, מאמי ❤️</h2></div>`;
+}
 $('gmBtn').onclick=()=>{if(prompt('Game Master code')==='2418')openGM();else toast('ACCESS DENIED')}
 function openGM(){
  $('gmPanel').classList.remove('hidden');
  $('gmDisaster').value=S.disaster;$('gmScore').value=S.score;$('gmSoloSpaTime').value=S.settings.soloSpaTime;$('gmSoloSpaDuration').value=S.settings.soloSpaDuration;$('gmCoupleSpaTime').value=S.settings.coupleSpaTime;$('gmCoupleSpaDuration').value=S.settings.coupleSpaDuration;$('gmRoom').value=S.settings.room;$('gmRoomObs').value=S.settings.roomObs;$('gmSafe').value=S.settings.safe;
+ $('gmBlessing').value=S.settings.blessing||'';
+ $('gmSongRabbinateName').value=S.settings.songs.rabbinate.name||'';$('gmSongRabbinateUrl').value=S.settings.songs.rabbinate.url||'';
+ $('gmSongMarieName').value=S.settings.songs.marie.name||'';$('gmSongMarieUrl').value=S.settings.songs.marie.url||'';
+ $('gmSongHotelName').value=S.settings.songs.hotel.name||'';$('gmSongHotelUrl').value=S.settings.songs.hotel.url||'';
+ $('gmSongQumranName').value=S.settings.songs.qumran.name||'';$('gmSongQumranUrl').value=S.settings.songs.qumran.url||'';
+
  $('gmLevel').innerHTML=LEVELS.map((x,i)=>`<option value="${i}">${i} — ${x}</option>`).join('');
  $('gmLevel').value=Math.min(9,Math.floor(S.level));
  let [done,total]=completionCount(S.level);
@@ -356,7 +457,20 @@ function openGM(){
  $('gmApproveBtn').disabled=!levelReady(S.level)||S.level>=9;
 }
 function closeGM(){$('gmPanel').classList.add('hidden')}
-function saveGMSettings(){S.disaster=+$('gmDisaster').value;S.score=+$('gmScore').value;S.settings.soloSpaTime=$('gmSoloSpaTime').value||'13:00';S.settings.soloSpaDuration=$('gmSoloSpaDuration').value||'TBD';S.settings.coupleSpaTime=$('gmCoupleSpaTime').value||'17:00';S.settings.coupleSpaDuration=$('gmCoupleSpaDuration').value||'TBD';S.settings.room=$('gmRoom').value||'TBD';S.settings.roomObs=$('gmRoomObs').value||'TBD';S.settings.safe=$('gmSafe').value||'2584';save();toast('Settings saved');openGM()}
+function saveGMSettings(){
+ S.disaster=+$('gmDisaster').value;S.score=+$('gmScore').value;
+ S.settings.soloSpaTime=$('gmSoloSpaTime').value||'13:00';S.settings.soloSpaDuration=$('gmSoloSpaDuration').value||'TBD';
+ S.settings.coupleSpaTime=$('gmCoupleSpaTime').value||'17:00';S.settings.coupleSpaDuration=$('gmCoupleSpaDuration').value||'TBD';
+ S.settings.room=String($('gmRoom').value||'TBD').trim();S.settings.roomObs=String($('gmRoomObs').value||'TBD').trim();
+ S.settings.safe=String($('gmSafe').value||'2584').trim();S.settings.blessing=$('gmBlessing').value||'';
+ S.settings.songs={
+  rabbinate:{name:$('gmSongRabbinateName').value||'',url:$('gmSongRabbinateUrl').value||''},
+  marie:{name:$('gmSongMarieName').value||'',url:$('gmSongMarieUrl').value||''},
+  hotel:{name:$('gmSongHotelName').value||'',url:$('gmSongHotelUrl').value||''},
+  qumran:{name:$('gmSongQumranName').value||'',url:$('gmSongQumranUrl').value||''}
+ };
+ save();toast('ההגדרות נשמרו ✅');openGM()
+}
 function masterBypassNext(){
   let i = Number.isInteger(S.level) ? S.level : Math.floor(S.level);
   if(i>=9){alert('זה כבר השלב האחרון.');return}
@@ -369,7 +483,7 @@ function masterBypassNext(){
   renderLevel(i+1);
 }
 function forceLevel(){let n=+$('gmLevel').value;if(!S.unlocked.includes(n))S.unlocked.push(n);S.level=n;S.substage='main';save();closeGM();renderLevel(n)}
-function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV72');location.reload()}}
+function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV8');location.reload()}}
 if(S.started)renderHome();else renderStart();
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
 </script>
