@@ -179,6 +179,9 @@ function checkText(key,answers,success,points){
     S.done[key]=true;sfx('ok');if(points)add(points);save();
     let fb=$('fb-'+key);if(fb){fb.innerHTML=success;fb.classList.remove('hidden')}
     if(key==='p2')setTimeout(showPackingModal,350);
+    const songTrips={rabbinateAns:['rabbinate','לרבנות'],marieAns:['marie','לקפה מארי'],hotelAns:['hotel','למלון'],qumAns:['qumran','לקומראן']};
+    if(songTrips[key])setTimeout(()=>showSongPopup(songTrips[key][0],songTrips[key][1]),500);
+    if(key==='qumAns')setTimeout(showDepartureCountdown,900);
     if(['l1','l2','l3','l4'].includes(key)&&['l1','l2','l3','l4'].every(k=>S.done[k]))setTimeout(showCodePopup,300);
     if(['d1','d2'].includes(key)&&S.done.d1&&S.done.d2)setTimeout(showPhoneDownPopup,350);
     refreshApprovalGate();
@@ -212,11 +215,22 @@ function songCard(key,title){
   return `<div class="card song-card center"><h3>🎵 שיר לדרך — ${title}</h3><p><b>${name}</b></p><button onclick="openSong('${key}')">▶️ הפעילי את השיר לנסיעה</button></div>`;
 }
 function openSong(key){const u=S.settings.songs?.[key]?.url;if(u)window.open(u,'_blank')}
+function showSongPopup(key,title){
+  const x=S.settings.songs?.[key]||{}; if(!x.url||$('dynamicModal'))return;
+  const name=x.name||'השיר שלנו לדרך';
+  showOverlay('🎵 שיר לדרך — '+title,`<p>הגיע הזמן לנסיעה הבאה.</p><h3>${name}</h3><button onclick="openSong('${key}')">▶️ הפעילי את השיר</button>`,'יאללה, נוסעים 🚗');
+}
+function showDepartureCountdown(){
+  if($('dynamicModal'))return;
+  showOverlay('⏰ יוצאים ב־21:00',`<p>היעד לערב נחשף. עכשיו נשאר להתארגן בזמן.</p><div class="timer-big" id="leaveCountdown">--:--:--</div><p class="sub">ספירה לאחור עד היציאה לקומראן</p>`,'הבנתי — מתחילה להתארגן ✨');
+  const tick=()=>{const e=$('leaveCountdown');if(!e)return;const n=new Date(),t=new Date(n);t.setHours(21,0,0,0);if(n>t)t.setDate(t.getDate()+1);let d=Math.max(0,t-n),h=Math.floor(d/3600000),m=Math.floor(d%3600000/60000),sec=Math.floor(d%60000/1000);e.textContent=[h,m,sec].map(x=>String(x).padStart(2,'0')).join(':');};tick();window.leaveCountdownTimer=setInterval(tick,1000);
+}
+
 
 function hintBlock(id,hints){let n=S.hints[id]||0;let shown=hints.slice(0,n).map((h,i)=>`<div class="hint">HINT #${i+1}<br>${h}</div>`).join('');let btn=n<hints.length?`<button class="secondary" onclick="useHint('${id}')">${n?'עוד רמז':'תני לי רמז'} —5 🏆</button>`:'';return `<div id="h-${id}">${shown}${btn}</div>`}
 function useHint(id){S.hints[id]=(S.hints[id]||0)+1;add(-5);renderLevel(S.level)}
 function showPackingModal(){$('packingModal').classList.remove('hidden')} function closePackingModal(){S.done.packingConfirmed=true;save();$('packingModal').classList.add('hidden');refreshApprovalGate()}
-function timer(btn,n=24,key=null){if(key&&S.done[key]){btn.textContent='COMPLETED ✓';btn.disabled=true;return}btn.disabled=true;let x=n;btn.textContent=x;let t=setInterval(()=>{x--;btn.textContent=x;if(x<=0){clearInterval(t);btn.textContent='COMPLETED ✓';if(key)S.done[key]=true;add(10);save();refreshApprovalGate()}},1000)}
+function timer(btn,n=24,key=null){if(key&&S.done[key]){btn.textContent='COMPLETED ✓';btn.disabled=true;return}btn.disabled=true;let x=n;btn.textContent=x;let t=setInterval(()=>{x--;btn.textContent=x;if(x<=5)sfx('bad');else tone(440,.035,'square',.018);if(x<=0){clearInterval(t);btn.textContent='COMPLETED ✓';if(key)S.done[key]=true;add(10);save();refreshApprovalGate()}},1000)}
 function replay(id){const m={roomkey:'ב־Cafe Marie הופיע לרגע: ROOM KEY: 2',balloons:'במסך הראשון הופיעו 8 בלונים 🎈',file05:'בסיום הארכיון הופיע FILE 05',code04:'ב־GET READY הופיע CODE: 04'};alert(m[id]);add(-5)}
 const REQUIRED={
   0:['p1','p2','p3','p4','packingConfirmed'],
@@ -247,7 +261,7 @@ function approveNextLevel(){
   if(!S.unlocked.includes(i+1))S.unlocked.push(i+1);
   S.level=i+1;S.substage='main';save();closeGM();renderLevel(i+1);
 }
-function renderStart(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');$('soundBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><div style="font-size:28px">🎈🎈🎈🎈🎈🎈🎈🎈</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><img class="character" src="amit-cartoon.png" alt="Amit Birthday Game caricature"><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
+function renderStart(){$('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');$('soundBtn').classList.add('hidden');screenEl.innerHTML=`<div class="hero"><div class="gold">18.08.2026</div><div style="font-size:28px">🎈🎈🎈🎈🎈🎈🎈🎈</div><h1>AMIT'S<br>BIRTHDAY<br>GAME</h1><p class="sub">SEASON 4 • PLAYER 01: AMIT • AGE 24</p><img class="character" src="amit-scene-01-morning.png" alt="עמית בבוקר יום ההולדת"><div class="card"><div class="small">RELATIONSHIP STATUS</div><h3>Somehow still with Nitay</h3></div><button onclick="start()">START GAME</button></div>`}
 function start(){S.started=true;save();renderHome()}
 function renderHome(){$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');$('soundBtn').classList.remove('hidden');$('soundBtn').textContent=S.sound?'🔊':'🔇';topUI();screenEl.innerHTML=`<div class="card"><div class="small">המשימה הנוכחית</div><h2>${LEVELS[S.level]}</h2><button onclick="renderLevel(${S.level})">המשך</button></div><div class="card"><h3>🚨 BIRTHDAY DISASTER METER™</h3><p>${S.disaster<20?'🟢 EVERYTHING SUSPICIOUSLY FINE':S.disaster<50?'🟠 WE MAY HAVE AN INCIDENT':'🔴 THIS IS NOW A STORY'}</p></div>${LEVELS.map((x,i)=>`<div class="route-item ${S.unlocked.includes(i)?'':'locked'}">${S.unlocked.includes(i)?(i===S.level?'▶':'✓'):'🔒'} ${S.unlocked.includes(i)?x:'CLASSIFIED'}</div>`).join('')}`}
 function startMemoryChallenge(){
@@ -256,7 +270,7 @@ function startMemoryChallenge(){
 }
 
 function startLife24(){
-  screenEl.innerHTML=`<div class="pause"><div class="card center reflect-card"><h2>24 SECONDS OF LIFE</h2><p>בלי לחשוב יותר מדי. פשוט תגידי בקול.</p><div class="timer-big" id="lifeCount">24</div><p class="sub">מה היית רוצה להספיק להגיד, לעשות או להרגיש?</p></div></div>`;
+  screenEl.innerHTML=`<div class="pause"><div class="card center reflect-card"><img class="character" src="amit-scene-13-timer24.png" alt="עמית עם טיימר"><h2>24 SECONDS OF LIFE</h2><p>בלי לחשוב יותר מדי. פשוט תגידי בקול.</p><div class="timer-big" id="lifeCount">24</div><p class="sub">מה היית רוצה להספיק להגיד, לעשות או להרגיש?</p></div></div>`;
   let n=24;
   let t=setInterval(()=>{
     n--;
@@ -296,12 +310,11 @@ function renderLevel(i){
  h+=`<div class="card"><h3>PACKING LIST UNLOCKED 🔓</h3><p>בגד ים • בגדי ערב • בגדים למחר • פיג׳מה • תחתונים/גרביים • כלי רחצה/טיפוח • מטען • משקפי שמש</p><button onclick="showPackingModal()">בדיקת תיק אחרונה ⚠️</button></div>`+nextBtn(0,'GET SOME SLEEP. TOMORROW WE PLAY.');
  }
  if(i===1){
- h+=`<div class="character-card"><img src="amit-birthday.png" alt="Amit birthday caricature"><div class="cap">BIRTHDAY GIRL MODE 🎂</div></div>`;
+ h+=`<div class="character-card"><img src="amit-scene-01-morning.png" alt="עמית ביום ההולדת"><div class="cap">BIRTHDAY GIRL MODE 🎂</div></div>`;
  h+=`<div class="card"><h3>GOOD MORNING, BIRTHDAY GIRL 🎂</h3><p>24. יום הולדת אחרון לפני החתונה.</p><div class="small">CASE № 24-08</div></div>`;
  h+=textQ('b1','18 + ? = הגיל של עמית היום',['6'],'✅ 24 YEARS SUCCESSFULLY CALCULATED.');
  h+=textQ('b2','בלי לחזור אחורה: כמה לבבות מופיעים למעלה במשחק?',['3','שלוש'],'✅ GOOD. SHE’S PAYING ATTENTION.');
  h+=mcq('b3','עמית נולדה ב־2002. מה הכי נכון לתאר את זה?',[{t:'Vintage 2002',ok:true,msg:'✅ VINTAGE 2002.'},{t:'דור האלפא',ok:false,msg:'❌'},{t:'1990s kid',ok:false,msg:'❌'},{t:'לא מדברים על גיל',ok:false,msg:'Fair.'}]);
- if(S.done.rabbinateAns)h+=songCard('rabbinate','לרבנות');
  h+=`<div class="card"><h3>TODAY'S FIRST MYSTERY 🔎</h3>${hintBlock('rabbinate',H.rabbinate)}${textQ('rabbinateAns','לאן נוסעים?',['רבנות','הרבנות','תיק נישואים','תיק נישואין','פתיחת תיק'],'🔓 DESTINATION UNLOCKED: הרבנות 💍📄',15)}</div>`; if(S.done.rabbinateAns)h+=songCard('rabbinate','לרבנות'); h+=nextBtn(1);
  }
  if(i===2){
@@ -312,7 +325,7 @@ function renderLevel(i){
  h+=`<div class="card"><h3>WHERE TO NEXT? ☕</h3>${hintBlock('marie',H.marie)}${textQ('marieAns','מה היעד הבא?',['קפה מארי','מארי','cafe marie','marie'],'☕ DESTINATION UNLOCKED: CAFE MARIE — ראשון לציון',15)}</div>`; if(S.done.marieAns)h+=songCard('marie','לקפה מארי'); h+=nextBtn(2);
  }
  if(i===3){
- h+=`<div class="character-card"><img src="amit-detective.png" alt="Amit detective caricature"><div class="cap">DETECTIVE MODE 🕵️‍♀️</div></div>`;
+ h+=`<div class="character-card"><img src="amit-scene-03-cafe.png" alt="עמית בקפה מארי"><div class="cap">DETECTIVE MODE 🕵️‍♀️</div></div>`;
  h+=`<div class="card"><h3>☕ CAFE MARIE — MEMORY MODE</h3><p>הפעם אין שאלת טריוויה על המסך הקודם. יש לך מבחן זיכרון אמיתי.</p></div>`;
  if(!S.done.memoryViewed){
    h+=`<div class="card center"><h2>👀 8 SECOND MEMORY</h2><p>כשתלחצי START יופיע כרטיס ל־8 שניות בלבד. אחר כך הוא ייעלם ותקבלי 3 שאלות.</p><button onclick="startMemoryChallenge()">START MEMORY</button></div>`;
@@ -320,7 +333,7 @@ function renderLevel(i){
    h+=textQ('m1','כמה נרות הופיעו על העוגה בכרטיס הזיכרון?',['5','חמש'],'🧠 MEMORY #1 — CORRECT');
    h+=textQ('m2','איזו שעה הופיעה על השעון בכרטיס?',['13:00','13','אחת','1:00'],'🧠 MEMORY #2 — CORRECT');
    h+=textQ('m3','כמה מתנות הופיעו בכרטיס הזיכרון?',['3','שלוש'],'🧠 MEMORY #3 — CORRECT');
-   h+=`<div class="character-card unlock-pop"><img src="amit-detective.png" alt="Amit detective caricature"><div class="cap">DETECTIVE AMIT 🕵️‍♀️ — MEMORY CLEARED</div></div>`;
+   h+=`<div class="character-card unlock-pop"><img src="amit-scene-12-detective.png" alt="עמית בלשית"><div class="cap">DETECTIVE AMIT 🕵️‍♀️ — MEMORY CLEARED</div></div>`;
    h+=`<div class="card"><span class="memory-chip">ROOM KEY: 2</span><h3>WHERE TO NEXT?</h3>${hintBlock('ta',H.ta)}${textQ('taAns','לאיזו עיר ממשיכים?',['תל אביב','tel aviv'],'🌇 TEL AVIV UNLOCKED',15)}</div>`+nextBtn(3);
  }
  }
@@ -336,10 +349,10 @@ function renderLevel(i){
  h+=`<div class="card center"><h3>🏆 HOTEL HUNTER</h3><span class="memory-chip">EST. 2002</span></div>`; h+=`<div class="card"><h3>🎂 BIRTHDAY WISH</h3><p>אם היית צריכה לבחור דבר אחד שאת מאחלת לעצמך לשנה הקרובה — מה הוא?</p><div class="inline"><input class="free-input" id="wishInput" value="${S.wish||''}" placeholder="המשאלה שלי..."><button onclick="saveWish()">שמרי ✨</button></div><div id="wishSaved" class="feedback ${S.done.birthdayWish?'':'hidden'}">✨ המשאלה נשמרה. המשחק לא שכח.</div></div>`+nextBtn(4);
  }
  if(i===5){
- h+=`<div class="character-card"><img src="amit-travel.png" alt="Amit arriving at hotel"><div class="cap">HOTEL MODE 🏨</div></div><div class="card"><h3>13:00 — FIRST HOTEL SURPRISE</h3><p>הגעת ל־Royal Beach. אבל לפני חדר, מנוחה או שאלות מיותרות — יש הפתעה.</p><p class="sub">הפעם נתאי לא מצטרף אלייך.</p></div>`;
+ h+=`<div class="character-card"><img src="amit-scene-05-hotel-pool.png" alt="עמית במלון"><div class="cap">HOTEL MODE 🏨</div></div><div class="card"><h3>13:00 — FIRST HOTEL SURPRISE</h3><p>הגעת ל־Royal Beach. אבל לפני חדר, מנוחה או שאלות מיותרות — יש הפתעה.</p><p class="sub">הפעם נתאי לא מצטרף אלייך.</p></div>`;
  h+=`<div class="card"><h3>WHAT DID HE BOOK? 🕵️‍♀️</h3>${hintBlock('soloSpa',H.soloSpa)}${textQ('soloSpaAns','מה מחכה לך עכשיו?',['עיסוי ראש','מסאז ראש','מסאז׳ ראש','טיפול ראש','עיסוי קצוות','ראש וקצוות','עיסוי ראש וקצוות','head massage'],'🔓 SOLO SURPRISE UNLOCKED — טיפול ראש וקצוות 💆‍♀️',20)}</div>`;
  if(S.done.soloSpaAns){
-   h+=`<div class="character-card unlock-pop"><img src="amit-spa.png" alt="Amit spa caricature"><div class="cap">SOLO SURPRISE UNLOCKED 💆‍♀️</div></div>`;
+   h+=`<div class="character-card unlock-pop"><img src="amit-scene-06-head-massage.png" alt="עמית במסאז ראש"><div class="cap">SOLO SURPRISE UNLOCKED 💆‍♀️</div></div>`;
    h+=textQ('soloSpaFeeling','לפני שאת נכנסת להתפנק — איך היית רוצה לצאת מהטיפול הזה?',['*'],'❤️ קיבלתי. עכשיו לכי להתפנק.',0,'רגועה / קלילה / מאושרת / כל דבר...');
    if(S.done.soloSpaFeeling){
      h+=`<div class="card center"><h2>JUST FOR AMIT ❤️</h2><p>🕐 ${S.settings.soloSpaTime}<br>${S.settings.soloSpaDuration!=='TBD'?`⏱️ ${S.settings.soloSpaDuration}`:''}</p><p>חפרת על זה מספיק זמן. הגיע הזמן.</p><button onclick="pauseSoloSpa()">I'M GOING IN 💆‍♀️</button></div>`;
@@ -351,7 +364,7 @@ function renderLevel(i){
  }
  }
  if(i===6){
- h+=`<div class="character-card"><img src="amit-spa.png" alt="Amit spa caricature"><div class="cap">SPA DAY המשךS 💆‍♀️</div></div>`;
+ h+=`<div class="character-card"><img src="amit-scene-08-spa.png" alt="עמית בספא"><div class="cap">SPA DAY המשך 💆‍♀️</div></div>`;
  h+=`<div class="card"><h3>ROOM UPDATED 🏨✨</h3><p>בזמן שהיית במשימה הסודית שלך, משהו בחדר השתנה.</p><p class="sub">מומלץ להסתכל מסביב. המשחק זוכר דברים שאת לא בהכרח זוכרת.</p></div>`;
  h+=textQ('h1','מה מספר החדר שלנו?',[String(S.settings.room)],'✅ מספר החדר אומת.');
  h+=textQ('h2','👀 אתגר תשומת לב בחדר — מה הדבר שנתאי ביקש ממך לשים לב אליו?',[String(S.settings.roomObs)],'✅ בלשית המלון פתרה את זה.',15,'כתבי מה ראית...');
@@ -373,7 +386,7 @@ function renderLevel(i){
  h+=nextBtn(6,'מצב אחר הצהריים');
  }
  if(i===7){
- h+=`<div class="character-card"><img src="amit-glam.png" alt="Amit getting ready caricature"><div class="cap">GET READY MODE ✨</div></div>`;
+ h+=`<div class="character-card"><img src="amit-scene-09-glam.png" alt="עמית מתארגנת לערב"><div class="cap">GET READY MODE ✨</div></div>`;
  h+=`<div class="card"><h3>OPERATION: GET HOT</h3><p>DEADLINE: 20:45 • DESTINATION: CLASSIFIED</p></div>`;
  h+=`<div class="card"><h3>24 SECOND PANIC</h3><p>הביאי את הנעליים שאת מתכננת לנעול הערב.</p><button onclick="timer(this,24,'ready24')">START</button></div>`;
  h+=textQ('g1','מה המזל של עמית?',['אריה','leo'],'♌ MAIN CHARACTER ENERGY CONFIRMED.');
@@ -385,7 +398,7 @@ function renderLevel(i){
  }
  if(i===8){
  if(S.substage!=='postDinner'){
-   h+=`<div class="character-card"><img src="amit-dinner.png" alt="Amit dinner caricature"><div class="cap">DINNER MODE 🍸</div></div>`;
+   h+=`<div class="character-card"><img src="amit-scene-11-dinner.png" alt="עמית בקומראן"><div class="cap">DINNER MODE 🍸</div></div>`;
    h+=`<div class="card"><h3>DESTINATION CONFIRMED ✅</h3><h2>QUMRAN</h2><p>ניסיון ראשון: ט״ו באב ❌<br>ניסיון שני: יום הולדת 24 ✅</p></div>`;
    h+=textQ('d1','רגע לפני שנכנסים: מה השעה עכשיו בערך?',['20','21',':'],'✅ TEMPORAL AWARENESS CONFIRMED.',10,'למשל 21:27');
    h+=textQ('d2','מה לדעתך יהיה הדבר הראשון שנתאי יזמין?',['*'],'🔮 PREDICTION SAVED.',0,'ניחוש חופשי...');
@@ -400,7 +413,7 @@ function renderLevel(i){
  }
  }
  if(i===9){
- h+=`<div class="character-card"><img src="amit-detective.png" alt="Amit safe detective caricature"><div class="cap">FINAL BOSS DETECTIVE 🔐</div></div>`;
+ h+=`<div class="character-card"><img src="amit-scene-12-detective.png" alt="עמית בלשית בכספת"><div class="cap">FINAL BOSS DETECTIVE 🔐</div></div>`;
  h+=`<div class="card"><h3>LEVEL 9A — FIND IT 🔎</h3><p>משהו מחכה לך בחדר. אני לא אגיד מה, ואני לא אגיד איפה.</p>${hintBlock('safe',H.safe)}${textQ('safePlace','איפה נמצא הדבר שאת מחפשת?',['כספת','הכספת','safe'],'🔐 LOCATION CONFIRMED: THE SAFE',15)}</div>`;
  h+=`<div class="card"><h3>LEVEL 9B — THE FOUR LOCKS</h3><p>ארבע ספרות. ארבע שאלות. NO MULTIPLE CHOICE.</p></div>`;
  h+=textQ('l1','LOCK #1 — איזה מספר הופיע ליד ROOM KEY?',['2'],'🔓 LOCK 1 OPEN — 2',0)+`<button class="secondary" onclick="replay('roomkey')">REPLAY MEMORY —5</button>`;
@@ -434,7 +447,7 @@ function pauseDinner(){screenEl.innerHTML=`<div class="pause"><h1>🍽️ DINNER
 function returnFromDinner(){S.done.dinnerReturned=true;S.substage='postDinner';save();renderLevel(8)}
 function showEnding(){
  $('topbar').classList.add('hidden');$('gmBtn').classList.add('hidden');$('soundBtn').classList.add('hidden');sfx('win');
- screenEl.innerHTML=`<div class="hero final unlock-pop"><div class="big">🏆❤️</div><div class="gold">המשחק הושלם</div><h1>עמית, עשית את זה!</h1><p>פתרת את החידות, מצאת את היעדים, שרדת את נתאי והגעת עד הסוף.</p><h2>כל הכבוד, ילדת יום ההולדת ❤️</h2><p class="sub">SEASON 4 — 100% COMPLETE</p><button onclick="showBlessing()">יש עוד דבר אחד… ❤️</button></div>`;
+ screenEl.innerHTML=`<div class="hero final unlock-pop"><img class="character" src="amit-scene-19-victory.png" alt="עמית חוגגת"><div class="big">🏆❤️</div><div class="gold">המשחק הושלם</div><h1>עמית, עשית את זה!</h1><p>פתרת את החידות, מצאת את היעדים, שרדת את נתאי והגעת עד הסוף.</p><h2>כל הכבוד, ילדת יום ההולדת ❤️</h2><p class="sub">SEASON 4 — 100% COMPLETE</p><button onclick="showBlessing()">יש עוד דבר אחד… ❤️</button></div>`;
 }
 function showBlessing(){
  const b=(S.settings.blessing||'').trim();
