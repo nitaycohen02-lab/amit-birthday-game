@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amit-birthday-v7-1-complete';
+const CACHE_NAME = 'amit-birthday-v7-2-master-bypass';
 const ASSETS = [
   './',
   './index.html',

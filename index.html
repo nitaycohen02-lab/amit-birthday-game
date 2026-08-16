@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>AMIT'S BIRTHDAY GAME — V7.1 FINAL</title>
-<!-- V7.1 FINAL: LEVEL 5 FLOW FIX + CONTEXT CARICATURES + 24 SECONDS OF LIFE + STRICT GM GATES -->
+  <title>AMIT'S BIRTHDAY GAME — V7.2</title>
+<!-- V7.2: MASTER BYPASS + CONTEXT CARICATURES + 24 SECONDS OF LIFE -->
   <meta name="description" content="Amit's Birthday Game — Season 4">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -85,6 +85,11 @@
     <button id="gmApproveBtn" onclick="approveNextLevel()">APPROVE NEXT LEVEL</button>
   </div>
   <div class="card">
+    <h3>MASTER BYPASS 🔓</h3>
+    <p class="sub">למקרה שנתקעים: מעבר מיידי לשלב הבא גם אם לא כל המשימות הושלמו.</p>
+    <button class="danger" onclick="masterBypassNext()">BYPASS TO NEXT LEVEL</button>
+  </div>
+  <div class="card">
     <label>פתיחה ידנית / חילוץ</label><select id="gmLevel"></select>
     <button class="secondary" onclick="forceLevel()">FORCE OPEN LEVEL</button>
   </div>
@@ -107,9 +112,9 @@
 <script>
 const LEVELS=['PACKING MISSION','BIRTHDAY MORNING','THE RABBINATE','CAFE MARIE','ROAD TO TEL AVIV','SOLO SURPRISE','BIRTHDAY ARCHIVES + COUPLES SPA','GET READY','QUMRAN','FINAL BOSS'];
 const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},hints:{},wish:'',life24:'',settings:{soloSpaTime:'13:00',soloSpaDuration:'TBD',coupleSpaTime:'17:00',coupleSpaDuration:'TBD',room:'TBD',roomObs:'TBD',safe:'2584'}};
-let S; try{S=JSON.parse(localStorage.getItem('amitGameV71'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+let S; try{S=JSON.parse(localStorage.getItem('amitGameV72'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
 const $=id=>document.getElementById(id), screenEl=$('screen');
-function save(){localStorage.setItem('amitGameV71',JSON.stringify(S));topUI()}
+function save(){localStorage.setItem('amitGameV72',JSON.stringify(S));topUI()}
 function topUI(){$('score').textContent=S.score;$('disaster').textContent=S.disaster+'%';$('lvl').textContent=S.level;$('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
 function toast(t){let x=$('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1700)}
 function add(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
@@ -347,13 +352,24 @@ function openGM(){
  $('gmLevel').innerHTML=LEVELS.map((x,i)=>`<option value="${i}">${i} — ${x}</option>`).join('');
  $('gmLevel').value=Math.min(9,Math.floor(S.level));
  let [done,total]=completionCount(S.level);
- $('gmApprovalStatus').innerHTML=`Current Level: <b>${S.level}</b><br>Required missions: <b>${done}/${total}</b><br>Ready for approval: <b>${levelReady(S.level)?'YES ✅':'NO 🔒'}</b>`;
+ $('gmApprovalStatus').innerHTML=`Current Level: <b>${S.level}</b><br>Required missions: <b>${done}/${total}</b><br>Ready for normal approval: <b>${levelReady(S.level)?'YES ✅':'NO 🔒'}</b><br><span class="small">Master Bypass זמין תמיד במקרה תקלה.</span>`;
  $('gmApproveBtn').disabled=!levelReady(S.level)||S.level>=9;
 }
 function closeGM(){$('gmPanel').classList.add('hidden')}
 function saveGMSettings(){S.disaster=+$('gmDisaster').value;S.score=+$('gmScore').value;S.settings.soloSpaTime=$('gmSoloSpaTime').value||'13:00';S.settings.soloSpaDuration=$('gmSoloSpaDuration').value||'TBD';S.settings.coupleSpaTime=$('gmCoupleSpaTime').value||'17:00';S.settings.coupleSpaDuration=$('gmCoupleSpaDuration').value||'TBD';S.settings.room=$('gmRoom').value||'TBD';S.settings.roomObs=$('gmRoomObs').value||'TBD';S.settings.safe=$('gmSafe').value||'2584';save();toast('Settings saved');openGM()}
+function masterBypassNext(){
+  let i = Number.isInteger(S.level) ? S.level : Math.floor(S.level);
+  if(i>=9){alert('זה כבר השלב האחרון.');return}
+  if(!confirm('לעבור לשלב הבא גם בלי להשלים את כל המשימות?'))return;
+  if(!S.unlocked.includes(i+1))S.unlocked.push(i+1);
+  S.level=i+1;
+  S.substage='main';
+  save();
+  closeGM();
+  renderLevel(i+1);
+}
 function forceLevel(){let n=+$('gmLevel').value;if(!S.unlocked.includes(n))S.unlocked.push(n);S.level=n;S.substage='main';save();closeGM();renderLevel(n)}
-function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV71');location.reload()}}
+function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV72');location.reload()}}
 if(S.started)renderHome();else renderStart();
 if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}
 </script>
