@@ -1,4 +1,4 @@
-const CACHE_NAME='amit-birthday-v9-2-night-before';
+const CACHE_NAME='amit-birthday-v9-3-fixed';
 const ASSETS=['./', './index.html', './amit-scene-01-morning.png', './amit-scene-02-rabbinate.png', './amit-scene-03-cafe.png', './amit-scene-04-road.png', './amit-scene-05-hotel-pool.png', './amit-scene-06-head-massage.png', './amit-scene-07-couple-spa.png', './amit-scene-08-spa.png', './amit-scene-09-glam.png', './amit-scene-10-road-qumran.png', './amit-scene-11-dinner.png', './amit-scene-12-detective.png', './amit-scene-13-timer24.png', './amit-scene-14-safe-lock.png', './amit-scene-15-wrong.png', './amit-scene-16-unlock.png', './amit-scene-17-almost.png', './amit-scene-18-treasure.png', './amit-scene-19-victory.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)))});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
