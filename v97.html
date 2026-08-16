@@ -4,7 +4,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<!-- AMIT GAME V9.8 FINAL FIX -->
+<!-- AMIT GAME V9.7 DIRECT LEVEL 0 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -86,7 +86,7 @@ button{
 <body>
 <div class="app">
   <div class="top hidden" id="topbar">
-    <div class="brand">AMIT'S BIRTHDAY GAME • SEASON 4 <span style="opacity:.35">V9.8</span></div>
+    <div class="brand">AMIT'S BIRTHDAY GAME • SEASON 4</div>
     <div class="stats"><span class="pill">🏆 <b id="score">0</b></span><span class="pill">❤️❤️❤️</span><span class="pill">🚨 <b id="disaster">0%</b></span><span class="pill">LVL <b id="lvl">0</b></span></div>
     <div class="meter"><div id="progressBar"></div></div>
   </div>
@@ -154,12 +154,12 @@ button{
 <script>
 const LEVELS=['הלילה שלפני — משימת האריזה','בוקר יום ההולדת','הרבנות','קפה מארי','בדרך לתל אביב','הפתעת הסולו','הארכיון הסודי','מתארגנים לערב','קומראן','השלב האחרון'];
 const DEF={started:false,score:0,disaster:0,level:0,substage:'main',unlocked:[0],done:{},answers:{},hints:{},wish:'',life24:'',sound:true,settings:{soloSpaTime:'13:00',soloSpaDuration:'TBD',coupleSpaTime:'17:00',coupleSpaDuration:'TBD',safe:'2584',blessing:'',songs:{rabbinate:{name:'',url:''},marie:{name:'Espresso — Sabrina Carpenter',url:''},hotel:{name:'',url:''},qumran:{name:'Die With A Smile — Lady Gaga & Bruno Mars',url:''}}}};
-let S; try{S=JSON.parse(localStorage.getItem('amitGameV98'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
+let S; try{S=JSON.parse(localStorage.getItem('amitGameV97'))||JSON.parse(JSON.stringify(DEF))}catch(e){S=JSON.parse(JSON.stringify(DEF))}
 S.answers=S.answers||{}; if(typeof S.sound!=='boolean')S.sound=true; S.settings=S.settings||{};
 S.settings.songs=S.settings.songs||JSON.parse(JSON.stringify(DEF.settings.songs));
 for(const k of Object.keys(DEF.settings))if(S.settings[k]===undefined)S.settings[k]=JSON.parse(JSON.stringify(DEF.settings[k]));
 const $=id=>document.getElementById(id), screenEl=$('screen');
-function save(){localStorage.setItem('amitGameV98',JSON.stringify(S));topUI()}
+function save(){localStorage.setItem('amitGameV97',JSON.stringify(S));topUI()}
 function topUI(){$('score').textContent=S.score;$('disaster').textContent=S.disaster+'%';$('lvl').textContent=S.level;$('progressBar').style.width=Math.min(100,S.level/9*100)+'%'}
 function toast(t){let x=$('toast');x.textContent=t;x.classList.remove('hidden');setTimeout(()=>x.classList.add('hidden'),1700)}
 function add(n){S.score+=n;save();toast((n>0?'+':'')+n+' POINTS')}
@@ -335,7 +335,7 @@ function renderStart(){
    <button onclick="start()">מתחילים לארוז 🌙</button>
  </div>`;
 }
-function start(){S.started=true;S.level=0;S.unlocked=[0];save();renderLevel(0)}
+function start(){S.started=true;S.level=0;save();renderLevel(0)}
 function renderHome(){
   $('topbar').classList.remove('hidden');
   $('gmBtn').classList.remove('hidden');
@@ -407,7 +407,7 @@ function renderLevel(i){
  if(Number.isInteger(i)){S.level=i;save()}$('topbar').classList.remove('hidden');$('gmBtn').classList.remove('hidden');$('soundBtn').classList.remove('hidden');$('soundBtn').textContent=S.sound?'🔊':'🔇';let h=`<div class="hero"><div class="gold">LEVEL ${S.level}</div><h2>${LEVELS[S.level]}</h2></div>`;
  if(i===0){
  h+=`<div class="card center"><div class="gold">🌙 הלילה שלפני יום ההולדת</div><h2>המשחק מתחיל כבר עכשיו</h2><p>עוד לא מגלים לאן נוסעים מחר. כרגע יש לך רק משימה אחת: לארוז לפי ההוראות ולסמוך עליי ❤️</p><p class="sub">מחר בבוקר ייפתח השלב הבא והיעד הראשון ייחשף.</p></div>`;
- h+=`<div class="card"><p>מחר מתחיל המשחק. את לא יודעת לאן. את לא יודעת מה עושים. והטעות הראשונה שלך הייתה לתת לנתאי לתכנן הכול.</p><h3>🌙 משימת הלילה — אריזה 🎒</h3></div>`;
+ h+=`<div class="card"><p>מחר מתחיל המשחק. את לא יודעת לאן. את לא יודעת מה עושים. והטעות הראשונה שלך הייתה לתת לנתאי לתכנן הכול.</p><h3>MISSION: PACK YOUR SH*T 🎒</h3></div>`;
  h+=mcq('p1','מחר מישהו זר כנראה ייגע בך במשך כמעט שעה. מה כדאי שיהיה בתיק?',[{t:'צו הרחקה',ok:false,msg:'❌ ניסיון יפה.'},{t:'בגד ים',ok:true,msg:'✅ ITEM UNLOCKED: בגד ים.'},{t:'אפוד קרמי',ok:false,msg:'❌ זה לא מילואים.'},{t:'נתאי',ok:false,msg:'❌ הוא כבר מגיע בחבילה.'}]);
  h+=textQ('p2','בערב תצטרכי להיראות כאילו נתאי השקיע ביום הזה הרבה יותר ממה שהוא באמת השקיע. מה נכנס לתיק?',['שמלה','בגדי ערב','אאוטפיט','outfit'],'✅ EVENING MODE UNLOCKED 👗');
  h+=mcq('p3','מחר את בת 24. בערך כמה שעות כבר היית בעולם?',[{t:'≈24,000',ok:false,msg:'❌ נמוך מדי.'},{t:'≈210,000',ok:true,msg:'✅ EXISTENCE CONFIRMED.'},{t:'≈876,000',ok:false,msg:'❌ קשוח.'},{t:'יותר מדי בשביל לסבול את נתאי',ok:false,msg:'רגשית נכון.'}]);
@@ -603,8 +603,8 @@ function masterBypassNext(){
   renderLevel(i+1);
 }
 function forceLevel(){let n=+$('gmLevel').value;if(!S.unlocked.includes(n))S.unlocked.push(n);S.level=n;S.substage='main';save();closeGM();renderLevel(n)}
-function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV98');location.reload()}}
-if(S.started && Number(S.level)===0){renderLevel(0)}else if(S.started){renderHome()}else{renderStart()}
+function resetGame(){if(confirm('לאפס הכול?')){localStorage.removeItem('amitGameV97');location.reload()}}
+if(S.started){if(Number(S.level)===0)renderLevel(0);else renderHome();}else renderStart();
 </script>
 
 
@@ -612,7 +612,7 @@ if(S.started && Number(S.level)===0){renderLevel(0)}else if(S.started){renderHom
 
 <script>
 (function(){
-  const VERSION='v9.8-finalfix';
+  const VERSION='v9.7-direct-level0';
   try{
     const seen=localStorage.getItem('amit_release_version');
     if(seen!==VERSION){
